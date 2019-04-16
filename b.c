@@ -87,7 +87,7 @@ int main() {
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) printf("方向%s, ", cur4->children->content);
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) printf("%s米, ", cur4->children->content);
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) printf("%s, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) printf("%s\n", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) printf("%s    ", cur4->children->content);
 														cur4 = cur4->next;
 													}
 												}
@@ -105,6 +105,7 @@ int main() {
 					curl_easy_cleanup(curl);
 					free(result.str);
 					xmlFreeDoc(doc);
+					putchar('\n');
 				} else {
 					printf("GPS not fixed\n");
 				}

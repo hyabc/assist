@@ -4,4 +4,5 @@ CMakeFiles
 CMakeCache.txt
 Makefile
 *.jpg
+*.xml
 cmake_install.cmake

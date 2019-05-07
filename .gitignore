@@ -6,3 +6,4 @@ Makefile
 *.jpg
 *.xml
 cmake_install.cmake
+a.out

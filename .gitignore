@@ -7,3 +7,8 @@ Makefile
 *.xml
 cmake_install.cmake
 a.out
+*.pb
+*.txt
+*.pbtxt
+tmp/
+*.tar.gz

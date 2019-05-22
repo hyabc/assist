@@ -1,6 +1,7 @@
 import cv2
 import time
 model = cv2.dnn.readNetFromTensorflow('frozen_inference_graph.pb', 'ssd_mobilenet_v2_coco_2018_03_29.pbtxt')
+#Download from https://github.com/opencv/opencv/wiki/TensorFlow-Object-Detection-API
 cam = cv2.VideoCapture(0)
 while True:
 	frame = cam.read()[1]

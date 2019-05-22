@@ -20,7 +20,7 @@ int main() {
 	int sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {perror("Error in Binding");return -1;}
 
-	if (!fork()) execlp("python3", "python3", "dist.py", NULL);
+	if (!fork()) execlp("python3", "python3", "distance.py", NULL);
 
 	while (1) {
 		struct sockaddr_in new_addr;

@@ -1,11 +1,18 @@
 #include <libxml/parser.h>
-#include <string.h>
 #include <gps.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 #include <curl/curl.h>
+#include <sys/socket.h> 
+#include <sys/un.h> 
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stddef.h> 
+#include <string.h>
 struct string {char* str;size_t size;};
 size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer){
 	size_t realsize = size * nmemb;
@@ -17,7 +24,14 @@ size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer){
 	return realsize;
 }
 char coordinateChangeRequest[500], coordinateChangeResult[500], revGeoRequest[500];
+char response[500];
 int main() {
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	addr.sin_port=htons(8888);
+	int sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 	curl_global_init(CURL_GLOBAL_ALL);
 	struct gps_data_t gps_data;
 	if (gps_open("localhost", "2947", &gps_data) == -1) {
@@ -71,6 +85,7 @@ int main() {
 					curl_easy_perform(curl);
 					doc = xmlParseMemory(result.str, result.size);
 					cur = xmlDocGetRootElement(doc);
+					response[0] = 0;
 					while (cur) {
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"response")) {
 							xmlNodePtr cur1 = cur->xmlChildrenNode;
@@ -84,10 +99,14 @@ int main() {
 												if (!xmlStrcmp(cur3->name, (const xmlChar *)"roadinter")) {
 													xmlNodePtr cur4 = cur3->xmlChildrenNode;
 													while (cur4) {
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) printf("方向%s, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) printf("%s米, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) printf("%s, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) printf("%s    ", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) 
+															sprintf(response, "方向%s, ", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance"))
+															sprintf(response, "%s米, ", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) 
+															sprintf(response, "%s, ", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name"))
+															sprintf(response, "%s    ", cur4->children->content);
 														cur4 = cur4->next;
 													}
 												}
@@ -105,7 +124,8 @@ int main() {
 					curl_easy_cleanup(curl);
 					free(result.str);
 					xmlFreeDoc(doc);
-					putchar('\n');
+					printf("%s\n", response);
+					sendto(sockfd, response, sizeof(response), 0, (struct sockaddr *)&addr, sizeof(addr));
 				} else {
 					printf("GPS not fixed\n");
 				}

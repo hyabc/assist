@@ -21,6 +21,8 @@ int main() {
 	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {perror("Error in Binding");return -1;}
 
 	if (!fork()) execlp("python3", "python3", "distance.py", NULL);
+	if (!fork()) execlp("python3", "python3", "vision.py", NULL);
+	if (!fork()) execlp("position", "position", NULL);
 
 	while (1) {
 		struct sockaddr_in new_addr;

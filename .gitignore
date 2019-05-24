@@ -1,10 +1,11 @@
 cv
 position
-server
+assist
 CMakeFiles
 CMakeCache.txt
 Makefile
 *.jpg
+*.png
 *.xml
 cmake_install.cmake
 a.out
@@ -13,3 +14,4 @@ a.out
 *.pbtxt
 tmp/
 *.tar.gz
+test.py

@@ -14,4 +14,4 @@ a.out
 *.pbtxt
 tmp/
 *.tar.gz
-test.py
+*.sock

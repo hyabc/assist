@@ -1,8 +1,6 @@
 import cv2
 import socket
 import time
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-sock.connect("assist.sock")
 model = cv2.dnn.readNetFromTensorflow('frozen_inference_graph.pb', 'graph.pbtxt')
 #Download from https://github.com/opencv/opencv/wiki/TensorFlow-Object-Detection-API
 cam = [cv2.VideoCapture(0), cv2.VideoCapture(1)]
@@ -12,9 +10,9 @@ cnt = 0
 while True:
 	cnt = cnt + 1
 	#camno = cnt % 2
-	camno = 0
+	camno = 1
 	frame = cam[camno].read()[1]
-	#frame = cv2.imread("c.jpg")
+	frame = cv2.imread("c.jpg")
 	height, width, _ = frame.shape
 	model.setInput(cv2.dnn.blobFromImage(frame, size=(300, 300), swapRB=True))
 	#print("Begin")

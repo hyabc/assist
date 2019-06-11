@@ -99,14 +99,23 @@ int main() {
 												if (!xmlStrcmp(cur3->name, (const xmlChar *)"roadinter")) {
 													xmlNodePtr cur4 = cur3->xmlChildrenNode;
 													while (cur4) {
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) 
-															sprintf(response, "方向%s, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance"))
-															sprintf(response, "%s米, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) 
-															sprintf(response, "%s, ", cur4->children->content);
-														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name"))
-															sprintf(response, "%s    ", cur4->children->content);
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) {
+															strcat(response, "方向");
+															strcat(response, cur4->children->content);
+															strcat(response, ", ");
+														}
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) {
+															strcat(response, cur4->children->content);
+															strcat(response, "米, ");
+														}
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) {
+															strcat(response, cur4->children->content);
+															strcat(response, ", ");
+														}
+														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) {
+															strcat(response, cur4->children->content);
+															strcat(response, ", ");
+														}
 														cur4 = cur4->next;
 													}
 												}

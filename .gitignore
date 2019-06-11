@@ -10,8 +10,6 @@ Makefile
 cmake_install.cmake
 a.out
 *.pb
-*.txt
-*.pbtxt
-tmp/
 *.tar.gz
 *.sock
+tmp/

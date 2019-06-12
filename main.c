@@ -14,6 +14,7 @@ char msg[MAXN + 10];
 int main() {
 	unlink("assist.sock");
 	struct sockaddr_un addr;
+	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, "assist.sock");
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);

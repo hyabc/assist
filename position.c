@@ -25,13 +25,12 @@ size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer){
 }
 char coordinateChangeRequest[500], coordinateChangeResult[500], revGeoRequest[500];
 char response[500];
+
 int main() {
-	struct sockaddr_in addr;
+	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	addr.sin_port=htons(8888);
-	int sockfd = socket(PF_INET, SOCK_DGRAM, 0);
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, "assist.sock");
 	curl_global_init(CURL_GLOBAL_ALL);
 	struct gps_data_t gps_data;
 	if (gps_open("localhost", "2947", &gps_data) == -1) {
@@ -134,7 +133,10 @@ int main() {
 					free(result.str);
 					xmlFreeDoc(doc);
 					printf("%s\n", response);
-					sendto(sockfd, response, sizeof(response), 0, (struct sockaddr *)&addr, sizeof(addr));
+					int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+					connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+					send(sockfd, response, strlen(response), 0);
+					close(sockfd);
 				} else {
 					printf("GPS not fixed\n");
 				}
@@ -144,7 +146,7 @@ int main() {
 		sleep(1);
 	}
 	gps_stream(&gps_data, WATCH_DISABLE, NULL);
-	gps_close (&gps_data);
+	gps_close(&gps_data);
 	xmlCleanupParser();
 	curl_global_cleanup();
 	return 0;

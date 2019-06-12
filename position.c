@@ -1,20 +1,16 @@
+#include <stdio.h>
 #include <libxml/parser.h>
 #include <gps.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 #include <curl/curl.h>
 #include <sys/socket.h> 
 #include <sys/un.h> 
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <stddef.h> 
 #include <string.h>
 struct string {char* str;size_t size;};
-size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer){
+size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer) {
 	size_t realsize = size * nmemb;
 	struct string *mem = (struct string*)(pointer);
 	mem->str = realloc(mem->str, mem->size + realsize + 1);
@@ -132,7 +128,7 @@ int main() {
 					curl_easy_cleanup(curl);
 					free(result.str);
 					xmlFreeDoc(doc);
-					printf("%s\n", response);
+					//printf("%s\n", response);
 					int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 					connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 					send(sockfd, response, strlen(response), 0);
@@ -142,8 +138,7 @@ int main() {
 				}
 			}
 		}
-
-		sleep(1);
+		sleep(0.5);
 	}
 	gps_stream(&gps_data, WATCH_DISABLE, NULL);
 	gps_close(&gps_data);

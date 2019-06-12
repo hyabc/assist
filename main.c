@@ -22,9 +22,9 @@ int main() {
 	listen(sockfd, 10);
 
 	//if (!fork()) execlp("python3", "python3", "distance.py", NULL);
-	if (!fork()) execlp("python3", "python3", "vision.py", NULL);
-	if (!fork()) execlp("python3", "python3", "test.py", NULL);
-	//if (!fork()) execlp("position", "position", NULL);
+	if (!fork()) execl("position", "position", NULL);
+	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
+	//if (!fork()) execlp("python3", "python3", "test.py", NULL);
 
 	while (1) {
 		struct sockaddr_un new_addr;

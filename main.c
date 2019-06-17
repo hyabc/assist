@@ -23,7 +23,9 @@ int main() {
 
 	//if (!fork()) execlp("python3", "python3", "distance.py", NULL);
 	if (!fork()) execl("position", "position", NULL);
-	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
+	if (!fork()) execl("distance", "distance", NULL);
+	if (!fork()) execl("voltage", "voltage", NULL);
+	if (!fork()) execlp("python3", "python3", "vision.py", NULL);
 	//if (!fork()) execlp("python3", "python3", "test.py", NULL);
 
 	while (1) {

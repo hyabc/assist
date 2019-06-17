@@ -12,7 +12,7 @@ while True:
 	#camno = cnt % 2
 	camno = 1
 	frame = cam[camno].read()[1]
-	frame = cv2.imread("c.jpg")
+	#frame = cv2.imread("c.jpg")
 	height, width, _ = frame.shape
 	model.setInput(cv2.dnn.blobFromImage(frame, size=(300, 300), swapRB=True))
 	#print("Begin")
@@ -30,7 +30,7 @@ while True:
 			dx = a[5] * width
 			dy = a[6] * height
 			cv2.rectangle(frame, (int(x1), int(y1)), (int(dx), int(dy)), (23, 230, 210), thickness=5)
-			result = result + str(a[2]) + ":" + str(name) + " " + str(a[3]) + " " + str(a[4]) + " " + str(a[5]) + " " + str(a[6]) + " "
+			result = result + str(a[2]) + ":" + str(name) + " " + str(a[3]) + " " + str(a[4]) + " " + str(a[5]) + " " + str(a[6]) + " " + "\n"
 	cv2.imwrite("detect" + str(cnt) + ".jpg", frame)
 	#print(str(cnt) + " " + str(time.localtime(time.time()).tm_sec))
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

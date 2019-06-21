@@ -15,3 +15,9 @@ a.out
 *.sock
 *.pdf
 tmp/
+*.o
+*.a
+yolov3.weights
+yolov3.cfg
+data/
+vision

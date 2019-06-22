@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import time
 import socket
 cnt = 0

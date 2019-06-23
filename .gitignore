@@ -19,5 +19,8 @@ tmp/
 *.a
 yolov3.weights
 yolov3.cfg
+yolov3-tiny.weights
+yolov3-tiny.cfg
 data/
 vision
+voice

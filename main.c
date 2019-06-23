@@ -22,11 +22,11 @@ int main() {
 	listen(sockfd, 10);
 
 	//if (!fork()) execlp("python3", "python3", "distance.py", NULL);
-	if (!fork()) execl("position", "position", NULL);
-	if (!fork()) execl("distance", "distance", NULL);
-	if (!fork()) execl("voltage", "voltage", NULL);
-	if (!fork()) execlp("python3", "python3", "vision.py", NULL);
-	//if (!fork()) execlp("python3", "python3", "test.py", NULL);
+	//if (!fork()) execl("position", "position", NULL);
+	//if (!fork()) execl("distance", "distance", NULL);
+	//if (!fork()) execl("voltage", "voltage", NULL);
+	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
+	if (!fork()) execlp("python3", "python3", "test.py", NULL);
 
 	while (1) {
 		struct sockaddr_un new_addr;
@@ -37,10 +37,10 @@ int main() {
 		putchar('\n');
 		putchar('\n');
 		close(clientfd);
-//		if (!fork()) execlp("aws", "aws", "polly", "synthesize-speech", "--output-format", "pcm", "--voice-id", "Zhiyu", "--text", msg, "voice", NULL);
-//		wait(NULL);
-//		if (!fork()) execlp("aplay", "aplay", "voice", NULL);
-//		wait(NULL);
+		if (!fork()) execlp("aws", "aws", "polly", "synthesize-speech", "--output-format", "pcm", "--voice-id", "Zhiyu", "--text", msg, "voice", NULL);
+		wait(NULL);
+		if (!fork()) execlp("aplay", "aplay", "voice", "-f", "S16_LE", "-r", "16000", NULL);
+		wait(NULL);
 	}
 	close(sockfd);
 	return 0;

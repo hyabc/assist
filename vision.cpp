@@ -14,8 +14,8 @@ int main() {
 	cv::VideoCapture cap(1);
 	char **names = get_labels("data/coco.names");
 	image **alphabet = load_alphabet();
-	//network *net = load_network("cfg/yolov3-tiny.cfg", "yolov3-tiny.weights", 0);
-	network *net = load_network("yolov3.cfg", "yolov3.weights", 0);
+	network *net = load_network("yolov3-tiny.cfg", "yolov3-tiny.weights", 0);
+	//network *net = load_network("yolov3.cfg", "yolov3.weights", 0);
 	set_batch_network(net, 1);
 	layer l = net->layers[net->n-1];
 	for (int iter = 1;;iter++) {

@@ -9,8 +9,8 @@
 #include <stdlib.h> 
 #include <stddef.h> 
 #include <string.h>
-#define MAXN 10000
-char msg[MAXN + 10];
+#define MAXBUF 10000
+char msg[MAXBUF];
 int main() {
 	unlink("assist.sock");
 	struct sockaddr_un addr;
@@ -21,6 +21,9 @@ int main() {
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	listen(sockfd, 10);
 
+	if (!fork()) execlp("python3", "python3", "speech.py", NULL);
+	sleep(1);
+
 	//if (!fork()) execlp("python3", "python3", "distance.py", NULL);
 	//if (!fork()) execl("position", "position", NULL);
 	//if (!fork()) execl("distance", "distance", NULL);
@@ -28,19 +31,24 @@ int main() {
 	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
 	if (!fork()) execlp("python3", "python3", "test.py", NULL);
 
+	struct sockaddr_un speech_addr;
+	memset(&speech_addr, 0, sizeof(speech_addr));
+	speech_addr.sun_family = AF_UNIX;
+	strcpy(speech_addr.sun_path, "speech.sock");
+
 	while (1) {
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);
 		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
-		size_t len = recv(clientfd, msg, MAXN, 0);
+		size_t len = recv(clientfd, msg, MAXBUF, 0);
 		for (int i = 0;i < len;i++) putchar(msg[i]);
 		putchar('\n');
-		putchar('\n');
 		close(clientfd);
-		if (!fork()) execlp("aws", "aws", "polly", "synthesize-speech", "--output-format", "pcm", "--voice-id", "Zhiyu", "--text", msg, "voice", NULL);
-		wait(NULL);
-		if (!fork()) execlp("aplay", "aplay", "voice", "-f", "S16_LE", "-r", "16000", NULL);
-		wait(NULL);
+
+		int speech_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+		connect(speech_sockfd, (struct sockaddr *)&speech_addr, sizeof(speech_addr));
+		send(speech_sockfd, msg, strlen(msg), 0);
+		close(speech_sockfd);
 	}
 	close(sockfd);
 	return 0;

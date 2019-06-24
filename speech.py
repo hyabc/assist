@@ -98,15 +98,8 @@ sock.listen(10)
 
 while (True):
 	connection, address = sock.accept()
-	st = ''
-	while (True):
-		data = connection.recv(1024)
-		if (len(data) > 0):
-			st = st + data.decode("utf-8")
-		else:
-			break
-
-	getspeech(st)
+	data = connection.recv(1024)
+	getspeech(data.decode("utf-8"))
 	pid = os.fork()
 	if pid == 0:
 		os.execlp("aplay", "aplay", "voice", "-f", "S16_LE", "-r", "16000")

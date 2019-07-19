@@ -8,4 +8,4 @@ while 1:
 	sock.connect("assist.sock");
 	sock.sendall(bytes(result, 'utf-8'))
 	time.sleep(1)
-sock.close()
+	sock.close()

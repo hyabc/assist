@@ -1,6 +1,6 @@
-distance
-position
 assist
+ultrasonic_distance
+position
 voltage
 CMakeFiles
 CMakeCache.txt

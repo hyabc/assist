@@ -74,12 +74,25 @@ struct ultrasonic_sensor {
 		return sum / AVERAGE_TIME;
 	}
 };
+char response[500];
 int main() {
-	ultrasonic_sensor s1(255, 429), s2(466, 397), s3(296, 481);
+	struct sockaddr_un addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, "assist.sock");
+
+	ultrasonic_sensor s1(466, 397);
 	sleep(1);
 	while (1) {
-		printf("%f  %f  %f\n", s1.get_average_distance(), s2.get_average_distance(), s3.get_average_distance());
+		double d = s1.get_average_distance();
+		printf("%f\n", d);
 		usleep(2000);
+
+		sprintf(response, "%f\n", d);
+		int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+		connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+		send(sockfd, response, strlen(response), 0);
+		close(sockfd);
 	}
 	return 0;
 }

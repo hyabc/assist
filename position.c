@@ -27,19 +27,16 @@ int main() {
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, "assist.sock");
+
 	curl_global_init(CURL_GLOBAL_ALL);
+
 	struct gps_data_t gps_data;
-	if (gps_open("localhost", "2947", &gps_data) == -1) {
-		puts("Cannot open gps");
-		return 0;
-	}
+	gps_open("localhost", "2947", &gps_data);
 	gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
 
 	while (1) {
-		if (gps_waiting (&gps_data, 500)) {
-			if (gps_read(&gps_data) == -1) {
-				puts("Read failed");
-			} else {
+		if (gps_waiting(&gps_data, 500)) {
+			if (gps_read(&gps_data) != -1) {
 				if (gps_data.status == STATUS_FIX && (gps_data.fix.mode == MODE_2D || gps_data.fix.mode == MODE_3D)) {
 //					printf("(%lf,%lf)-> ", gps_data.fix.longitude, gps_data.fix.latitude);
 					struct string result;
@@ -133,9 +130,8 @@ int main() {
 					connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 					send(sockfd, response, strlen(response), 0);
 					close(sockfd);
-				} else {
-					printf("GPS not fixed\n");
-				}
+				} else 
+					puts("GPS NOT FIXED");
 			}
 		}
 		sleep(0.5);

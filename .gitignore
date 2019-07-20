@@ -10,7 +10,6 @@ Makefile
 *.xml
 cmake_install.cmake
 a.out
-*.pb
 *.tar.gz
 *.sock
 *.pdf
@@ -24,3 +23,4 @@ yolov3-tiny.cfg
 data/
 vision
 voice
+speech.cpp

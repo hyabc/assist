@@ -34,7 +34,7 @@ int gpio_get_value(int port) {
 	sprintf(path, "/sys/class/gpio/gpio%d/value", port);
 	FILE* f = fopen(path, "r");
 	int ret;
-	fscanf(f, "%d\n", &ret);
+	fscanf(f, "%d", &ret);
 	fclose(f);
 	return ret;
 }
@@ -69,18 +69,17 @@ struct ultrasonic_sensor {
 		double sum = 0;
 		for (int i = 1;i <= AVERAGE_TIME;i++) {
 			sum += get_distance();
-			usleep(1000);
+			usleep(100);
 		}
 		return sum / AVERAGE_TIME;
 	}
 };
 int main() {
-	ultrasonic_sensor s1(466, 397);
+	ultrasonic_sensor s1(255, 429), s2(466, 397), s3(296, 481);
 	sleep(1);
 	while (1) {
-		double d = s1.get_average_distance();
-		printf("%f\n", d);
-		usleep(20000);
+		printf("%f  %f  %f\n", s1.get_average_distance(), s2.get_average_distance(), s3.get_average_distance());
+		usleep(2000);
 	}
 	return 0;
 }

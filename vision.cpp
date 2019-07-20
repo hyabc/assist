@@ -8,21 +8,27 @@
 #define nms_thresh 0.4
 #define max(x, y) ({x > y ? x : y;})
 #define min(x, y) ({x < y ? x : y;})
+char buffer[100];
+time_t timer;
+struct tm* tm_info;
 extern "C" {image mat_to_image(cv::Mat);}
 int main() {
 	srand(time(0));
 	cv::VideoCapture cap(1);
+	cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+	cap.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 	char **names = get_labels("data/coco.names");
 	image **alphabet = load_alphabet();
-	network *net = load_network("yolov3-tiny.cfg", "yolov3-tiny.weights", 0);
-	//network *net = load_network("yolov3.cfg", "yolov3.weights", 0);
+	//network *net = load_network("yolov3-tiny.cfg", "yolov3-tiny.weights", 0);
+	network *net = load_network("yolov3.cfg", "yolov3.weights", 0);
 	set_batch_network(net, 1);
 	layer l = net->layers[net->n-1];
 	for (int iter = 1;;iter++) {
 		printf("BEGIN %d\n", iter);
 		time_t start = clock();
 		cv::Mat f;
-		cap >> f;
+		//cap >> f;
+		f = cv::imread("w.jpg");
 		image frame = mat_to_image(f);
 		image sized = letterbox_image(frame, net->w, net->h);
 		network_predict(net, sized.data);
@@ -61,6 +67,12 @@ int main() {
 		free_image(frame);
 		free_image(sized);
 		printf("%f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+		time(&timer);
+		tm_info = localtime(&timer);
+		strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+		puts(buffer);
+
 	}
 	return 0;
 }

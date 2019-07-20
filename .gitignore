@@ -23,4 +23,5 @@ yolov3-tiny.cfg
 data/
 vision
 voice
-speech.cpp
+voice.mp3
+speech

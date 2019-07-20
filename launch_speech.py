@@ -56,3 +56,6 @@ access_key_id = os.environ['access_key_id']
 access_key_secret = os.environ['access_key_secret']
 appKey = os.environ['appKey']
 token, expire_time = AccessToken.create_token(access_key_id, access_key_secret)
+os.environ['token'] = token
+print(os.environ['token'])
+os.execl("speech", "speech")

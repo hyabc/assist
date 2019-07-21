@@ -1,4 +1,9 @@
 #include <iostream>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/types.h>
 #include <cstdlib>
 #include <string>
 #include <cstring>
@@ -7,6 +12,8 @@
 #include <sstream>
 #include "curl/curl.h"
 #include "jsoncpp/json/json.h"
+#define MAXBUF 10000
+char msg[MAXBUF];
 using namespace std;
 size_t header_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	map<string, string> *headers = (map<string, string>*)dest;
@@ -28,7 +35,7 @@ size_t body_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	(*str).append(string((char*)(ptr), (char*)(ptr) + len));
 	return len;
 }
-int processPOSTRequest(char* text) {
+void generate(const char* text) {
 	CURL* curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts");
 	curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -40,6 +47,7 @@ int processPOSTRequest(char* text) {
 	root["appkey"] = getenv("appKey");
 	root["token"] = getenv("token");
 	root["text"] = text;
+		printf("%s\n", text);
 	root["format"] = "mp3";
 	root["sample_rate"] = "16000";
 	root["voice"] = "ruoxi";
@@ -69,7 +77,29 @@ int processPOSTRequest(char* text) {
 }
 int main(int argc, char* argv[]) {
     curl_global_init(CURL_GLOBAL_ALL);
-    processPOSTRequest("一个进程的PID为10000，那么/proc下会有一个名字为10000的文件夹，其中包含有该进程的几乎所有信息：其中/proc/10000/cmdline文件中保存了启动该进程时使用的命令行。	由于刚才的进程是通过./test运行的，因此只要遍历/proc下的文件夹，如果发现某个文件夹中的cmdline文件内容为./test，则该文件夹的名字即为进程的PID，代码如下：在我的另外一个篇博客【Linux下C语言开发（信号signal处理机制）】中需要测试系统调用kill来向指定进行号发送指定的信号，在同一个测试文件很容易获取当前进程的pid，只需调用getpid()函数就可获取当前进程的pid。但是，如果要获取非当前进程的pid，那应该如何获取呢？即我们需要在Linux C 程序中，已知其他进程的名字，来获取其进程的pid。此时此刻我只能百度了，上网百度，找到两种可行的方法：1、通过popen创建一个管道，执行shell命令并得到返回结果 2、通过搜素/proc文件夹下的文件内容，得到进程PID（这里也可以学习下Linux C中如何读取一个文件夹中的内容）为了方便测试，随便创建l一个progress.c文件，文件内容如下：");
+	unlink("speech.sock");
+	struct sockaddr_un addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, "speech.sock");
+	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+	listen(sockfd, 10);
+	int lastPID = -1;
+	while (1) {
+		struct sockaddr_un new_addr;
+		socklen_t new_addr_size = sizeof(new_addr);
+		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
+		size_t len = recv(clientfd, msg, MAXBUF, 0);
+		close(clientfd);
+		generate(msg + 1);
+		if (msg[0] == '!' && lastPID != -1) kill(lastPID, SIGKILL);
+		int PID = fork();
+		if (PID == 0)
+			execlp("play", "play", "voice.mp3", NULL);
+		else
+			lastPID = PID;
+	}
     curl_global_cleanup();
     return 0;
 }

@@ -90,10 +90,10 @@ int main() {
 		printf("%f\n", d);
 		usleep(2000);
 
-		sprintf(response, "%f\n", d);
+		sprintf(response, "%f", d);
 		int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 		connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-		send(sockfd, response, strlen(response), 0);
+		send(sockfd, response, strlen(response) + 1, 0);
 		close(sockfd);
 	}
 	return 0;

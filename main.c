@@ -12,6 +12,7 @@
 char msg[MAXBUF];
 int main() {
 	unlink("assist.sock");
+
 	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;

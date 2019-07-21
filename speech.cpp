@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fcntl.h>
 #include <mutex>
 #include <pthread.h>
 #include <uuid/uuid.h>
@@ -12,6 +13,7 @@
 #include <string>
 #include <queue>
 #include <cstring>
+#include <semaphore.h> 
 #include <map>
 #include <fstream>
 #include <sstream>
@@ -22,7 +24,8 @@ using namespace std;
 #define MAX_Q1_SIZE 3
 #define MAX_Q2_SIZE 3
 char msg[MAXBUF];
-pthread_mutex_t mutex1, mutex2, mutex3;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER, mutex2 = PTHREAD_MUTEX_INITIALIZER, mutex3 = PTHREAD_MUTEX_INITIALIZER;
+sem_t sem1, sem2;
 int playPID;
 struct node {
 	char name[50];
@@ -102,14 +105,15 @@ void generate(const node& x) {
 }
 void* thread_func1(void* arg) {
 	while (1) {
+		sem_wait(&sem1);
 		pthread_mutex_lock(&mutex1);
 		int size = q1.size();
 		pthread_mutex_unlock(&mutex1);
 		if (size > 0) {
 			pthread_mutex_lock(&mutex1);
 			node x = q1.front();
-			//printf("1 - %s\n", x.name);
 			q1.pop();
+			//printf("1 - %s\n", x.name);
 			pthread_mutex_unlock(&mutex1);
 
 			generate(x);
@@ -123,6 +127,7 @@ void* thread_func1(void* arg) {
 				pthread_mutex_unlock(&mutex3);
 			}
 			q2.push(x);
+			sem_post(&sem2);
 			while (q2.size() > MAX_Q2_SIZE) q2.pop();
 			pthread_mutex_unlock(&mutex2);
 		}
@@ -130,6 +135,7 @@ void* thread_func1(void* arg) {
 }
 void* thread_func2(void* arg) {
 	while (1) {
+		sem_wait(&sem2);
 		pthread_mutex_lock(&mutex2);
 		int size = q2.size();
 		pthread_mutex_unlock(&mutex2);
@@ -140,9 +146,9 @@ void* thread_func2(void* arg) {
 			pthread_mutex_unlock(&mutex2);
 
 			int PID = fork();
-			if (!PID)
+			if (!PID) {
 				execlp("play", "play", x.name, NULL);
-			else {
+			} else {
 				pthread_mutex_lock(&mutex3);
 				playPID = PID;
 				pthread_mutex_unlock(&mutex3);
@@ -154,6 +160,8 @@ void* thread_func2(void* arg) {
 }
 int main() {
 	playPID = -1;
+	sem_init(&sem1, 0, 0);
+	sem_init(&sem2, 0, 0);
     curl_global_init(CURL_GLOBAL_ALL);
 	unlink("speech.sock");
 	struct sockaddr_un addr;
@@ -177,13 +185,12 @@ int main() {
 		pthread_mutex_lock(&mutex1);
 		if (x.important) {while (q1.size()) q1.pop();}
 		q1.push(x);
-		pthread_mutex_unlock(&mutex1);
-
-//		printf("3 - %s,   size = %d\n", msg, q1.size());
-		pthread_mutex_lock(&mutex1);
+		sem_post(&sem1);
 		while (q1.size() > MAX_Q1_SIZE) q1.pop();
 		pthread_mutex_unlock(&mutex1);
 	}
     curl_global_cleanup();
+	sem_destroy(&sem1);
+	sem_destroy(&sem2);
     return 0;
 }

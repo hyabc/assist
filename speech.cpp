@@ -1,20 +1,46 @@
 #include <iostream>
+#include <mutex>
+#include <pthread.h>
+#include <uuid/uuid.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <cstdlib>
 #include <string>
+#include <queue>
 #include <cstring>
 #include <map>
 #include <fstream>
 #include <sstream>
 #include "curl/curl.h"
 #include "jsoncpp/json/json.h"
-#define MAXBUF 10000
-char msg[MAXBUF];
 using namespace std;
+#define MAXBUF 10000
+#define MAX_Q1_SIZE 3
+#define MAX_Q2_SIZE 3
+char msg[MAXBUF];
+pthread_mutex_t mutex1, mutex2, mutex3;
+int playPID;
+struct node {
+	char name[50];
+	string content;
+	bool important;
+	node(char* msg): content(msg + 1), important(msg[0] == '!') {
+		char buf[50];
+		uuid_t uuid;
+		uuid_generate(uuid);
+		uuid_unparse(uuid, buf);
+		name[0] = 0;
+		strcat(name, "voice/");
+		strcat(name, buf);
+		strcat(name, ".mp3");
+		uuid_clear(uuid);
+	}
+};
+std::queue<node> q1, q2;
 size_t header_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	map<string, string> *headers = (map<string, string>*)dest;
 	string line((char*)ptr);
@@ -35,7 +61,7 @@ size_t body_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	(*str).append(string((char*)(ptr), (char*)(ptr) + len));
 	return len;
 }
-void generate(const char* text) {
+void generate(const node& x) {
 	CURL* curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts");
 	curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -46,8 +72,7 @@ void generate(const char* text) {
 	Json::FastWriter writer;
 	root["appkey"] = getenv("appKey");
 	root["token"] = getenv("token");
-	root["text"] = text;
-		printf("%s\n", text);
+	root["text"] = x.content;
 	root["format"] = "mp3";
 	root["sample_rate"] = "16000";
 	root["voice"] = "ruoxi";
@@ -70,12 +95,65 @@ void generate(const char* text) {
 	map<string, string>::iterator iter = responseHeaders.find("Content-Type");
 	if (iter != responseHeaders.end() && iter->second.compare("audio/mpeg") == 0) {
 		ofstream stream;
-		stream.open("voice.mp3", ios::out | ios::binary);
+		stream.open(x.name, ios::out | ios::binary);
 		stream.write(bodyContent.c_str(), bodyContent.size());
 		stream.close();
 	}
 }
-int main(int argc, char* argv[]) {
+void* thread_func1(void* arg) {
+	while (1) {
+		pthread_mutex_lock(&mutex1);
+		int size = q1.size();
+		pthread_mutex_unlock(&mutex1);
+		if (size > 0) {
+			pthread_mutex_lock(&mutex1);
+			node x = q1.front();
+			//printf("1 - %s\n", x.name);
+			q1.pop();
+			pthread_mutex_unlock(&mutex1);
+
+			generate(x);
+
+			pthread_mutex_lock(&mutex2);
+			if (x.important) {
+				while (q2.size()) q2.pop();
+
+				pthread_mutex_lock(&mutex3);
+				if (playPID != -1) kill(playPID, SIGKILL);
+				pthread_mutex_unlock(&mutex3);
+			}
+			q2.push(x);
+			while (q2.size() > MAX_Q2_SIZE) q2.pop();
+			pthread_mutex_unlock(&mutex2);
+		}
+	}
+}
+void* thread_func2(void* arg) {
+	while (1) {
+		pthread_mutex_lock(&mutex2);
+		int size = q2.size();
+		pthread_mutex_unlock(&mutex2);
+		if (size > 0) {
+			pthread_mutex_lock(&mutex2);
+			node x = q2.front();
+			q2.pop();
+			pthread_mutex_unlock(&mutex2);
+
+			int PID = fork();
+			if (!PID)
+				execlp("play", "play", x.name, NULL);
+			else {
+				pthread_mutex_lock(&mutex3);
+				playPID = PID;
+				pthread_mutex_unlock(&mutex3);
+			}
+			wait(0);
+			unlink(x.name);
+		}
+	}
+}
+int main() {
+	playPID = -1;
     curl_global_init(CURL_GLOBAL_ALL);
 	unlink("speech.sock");
 	struct sockaddr_un addr;
@@ -85,20 +163,26 @@ int main(int argc, char* argv[]) {
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	listen(sockfd, 10);
-	int lastPID = -1;
+	pthread_t thread1, thread2;
+	pthread_create(&thread1, NULL, thread_func1, NULL);
+	pthread_create(&thread2, NULL, thread_func2, NULL);
 	while (1) {
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);
 		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
 		size_t len = recv(clientfd, msg, MAXBUF, 0);
 		close(clientfd);
-		generate(msg + 1);
-		if (msg[0] == '!' && lastPID != -1) kill(lastPID, SIGKILL);
-		int PID = fork();
-		if (PID == 0)
-			execlp("play", "play", "voice.mp3", NULL);
-		else
-			lastPID = PID;
+		node x(msg);
+
+		pthread_mutex_lock(&mutex1);
+		if (x.important) {while (q1.size()) q1.pop();}
+		q1.push(x);
+		pthread_mutex_unlock(&mutex1);
+
+//		printf("3 - %s,   size = %d\n", msg, q1.size());
+		pthread_mutex_lock(&mutex1);
+		while (q1.size() > MAX_Q1_SIZE) q1.pop();
+		pthread_mutex_unlock(&mutex1);
 	}
     curl_global_cleanup();
     return 0;

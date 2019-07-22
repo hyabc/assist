@@ -8,5 +8,5 @@ while 1:
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 	sock.connect("speech.sock");
 	sock.sendall(bytes(result, 'utf-8'))
-	time.sleep(2)
+	time.sleep(1)
 	sock.close()

@@ -12,6 +12,7 @@ void setup() {
 	servo.attach(11);
 }
 void loop() {
+	Serial.print('L');
 	for (angle = 90;angle <= MAXANGLE;angle += 5) {
 		servo.write(angle);
 		delay(20);

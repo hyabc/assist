@@ -20,7 +20,7 @@ int main() {
 		scanf("%s", msg);
 		int speech_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 		connect(speech_sockfd, (struct sockaddr *)&speech_addr, sizeof(speech_addr));
-		send(speech_sockfd, msg, strlen(msg) + 1, 0);
+		send(speech_sockfd, msg, strlen(msg), 0);
 		close(speech_sockfd);
 	}
 	return 0;

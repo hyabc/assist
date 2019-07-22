@@ -31,7 +31,7 @@ struct node {
 	char name[50];
 	string content;
 	bool important;
-	node(char* msg): content(msg + 1), important(msg[0] == '!') {
+	node(char* msg, int len): content(msg + 1, len - 1), important(msg[0] == '!') {
 		char buf[50];
 		uuid_t uuid;
 		uuid_generate(uuid);
@@ -145,6 +145,7 @@ void* thread_func2(void* arg) {
 			q2.pop();
 			pthread_mutex_unlock(&mutex2);
 
+			std::cout << "NOW PLAY: " << x.content << std::endl;
 			int PID = fork();
 			if (!PID) {
 				execlp("play", "play", x.name, NULL);
@@ -178,9 +179,9 @@ int main() {
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);
 		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
-		size_t len = recv(clientfd, msg, MAXBUF, 0);
+		int len = recv(clientfd, msg, MAXBUF, 0);
 		close(clientfd);
-		node x(msg);
+		node x(msg, len);
 
 		pthread_mutex_lock(&mutex1);
 		if (x.important) {while (q1.size()) q1.pop();}

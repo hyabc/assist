@@ -3,6 +3,7 @@ Adafruit_VL53L0X sensor = Adafruit_VL53L0X();
 void setup() {
 	Serial.begin(115200);
 	while (!Serial) delay(1);
+  sensor.begin();
 }
 void loop() {
 	VL53L0X_RangingMeasurementData_t dist;

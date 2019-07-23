@@ -14,7 +14,7 @@ void setup() {
 void loop() {
 	Serial.print('L');
 	for (angle = 90;angle <= MAXANGLE;angle += 5) {
-		servo.write(angle);
+		//servo.write(angle);
 		delay(20);
 		sensor.rangingTest(&dist, false);
 		if (dist.RangeStatus != 4)
@@ -24,7 +24,7 @@ void loop() {
 		Serial.print(' ');
 	}
 	for (angle = MAXANGLE;angle >= 90;angle -= 5) {
-		servo.write(angle);
+		//servo.write(angle);
 		delay(10);
 	}
 	delay(50);

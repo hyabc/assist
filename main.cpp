@@ -1,4 +1,5 @@
 #include <stdio.h> 
+#include <math.h>
 #include <string>
 #include <sstream>
 #include <unistd.h>
@@ -17,16 +18,19 @@ int len;
 #define MIN_ANGLE 90
 #define MAX_ANGLE 150
 #define DELTA_ANGLE 5
+const double PI = acos(-1.0);
 void laser_func() {
 	string line(msg + 1, len - 1);
 	stringstream ss(line);
 	int size = (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1;
 	double a[100];
 	for (int i = 0;i < size;i++) {
-		int alpha = i * DELTA_ANGLE, dist;
+		double alpha = (double)(DELTA_ANGLE) * i * PI / 180.0, dist;
 		ss >> dist;
-		printf("  ==  %d ==\n", dist);
+		a[i] = (double)(dist) * cos(alpha);
+		printf("%f ", a[i]);
 	}
+	printf("\n");
 
 }
 int main() {
@@ -40,8 +44,7 @@ int main() {
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	listen(sockfd, 10);
 
-	//if (!fork()) execlp("python3", "python3", "launch_speech.py", NULL);
-	sleep(1);
+	if (!fork()) execlp("python3", "python3", "launch_speech.py", NULL);
 
 	if (!fork()) execlp("python3", "python3", "laser_distance.py", NULL);
 	//if (!fork()) execl("position", "position", NULL);
@@ -49,6 +52,7 @@ int main() {
 	//if (!fork()) execl("voltage", "voltage", NULL);
 	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
 	//if (!fork()) execlp("python3", "python3", "test.py", NULL);
+	sleep(1);
 
 	struct sockaddr_un speech_addr;
 	memset(&speech_addr, 0, sizeof(speech_addr));
@@ -71,10 +75,10 @@ int main() {
 				break;
 		}
 
-		int speech_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+/*		int speech_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 		connect(speech_sockfd, (struct sockaddr *)&speech_addr, sizeof(speech_addr));
 		send(speech_sockfd, msg, len, 0);
-		close(speech_sockfd);
+		close(speech_sockfd);*/
 	}
 	close(sockfd);
 	return 0;

@@ -18,17 +18,20 @@ void measure(int x) {
 		delayMicroseconds(10);
 		digitalWrite(trig[x], LOW);
 		pinMode(echo[x], INPUT);
-		duration = pulseIn(echo[x], HIGH, 100000);
+		duration = pulseIn(echo[x], HIGH, 10000);
 		distance += (duration / 2) / 29.1;
 		delayMicroseconds(100);
 	}
 	distance /= 10.0;
 }
 void loop() {
-	Serial.print('L');
+	Serial.print('U');
 	for (i = 0;i < 3;i++) {
 		measure(i);
-		Serial.print(distance);
+		if (distance < 1.0)
+			Serial.print((long)(round(distance)));
+		else 
+			Serial.print(-1);
 		Serial.print(' ');
 	}
 	Serial.println();

@@ -149,7 +149,7 @@ void* thread_func2(void* arg) {
 			int PID = fork();
 			if (!PID) {
 				execlp("play", "play", x.name, NULL);
-			} else {
+			} else if (!x.important) {
 				pthread_mutex_lock(&mutex3);
 				playPID = PID;
 				pthread_mutex_unlock(&mutex3);

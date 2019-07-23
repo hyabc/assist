@@ -61,7 +61,7 @@ struct ultrasonic_sensor {
 		clock_t start;
 		for (int i = 1;i <= 200;i++) {
 			ret = gpio_get_value(port_echo);
-			//printf("%d", ret);
+	//		printf("%d", ret);
 			if (!state) {start = clock();if (ret) state = 1;}
 			if (state && !ret) break;
 		}
@@ -83,18 +83,18 @@ int main() {
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, "assist.sock");
 
-	ultrasonic_sensor s1(466, 397);
+	ultrasonic_sensor s1(466, 397), s2(392, 296), s3(481, 254);
 	sleep(1);
 	while (1) {
-		double d = s1.get_average_distance();
-		printf("%f\n", d);
-		usleep(2000);
-
-		sprintf(response, "%f", d);
+		sprintf(response, "U%lf %lf %lf", s1.get_average_distance(), s2.get_average_distance(), s3.get_average_distance());
+		printf("%s\n", response);
+/*
 		int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 		connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 		send(sockfd, response, strlen(response) + 1, 0);
 		close(sockfd);
+*/
+		usleep(200);
 	}
 	return 0;
 }

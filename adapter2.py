@@ -1,7 +1,7 @@
 import time
 import serial
 import socket
-ser = serial.Serial('/dev/ttyACM0', 115200)
+ser = serial.Serial('/dev/ttyACM2', 115200)
 for i in range(5):
 	result = ser.readline() #ignore garbage input
 while 1:

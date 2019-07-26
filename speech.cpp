@@ -178,6 +178,7 @@ int main() {
 	pthread_t thread1, thread2;
 	pthread_create(&thread1, NULL, thread_func1, NULL);
 	pthread_create(&thread2, NULL, thread_func2, NULL);
+
 	while (1) {
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);

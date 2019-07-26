@@ -5,13 +5,13 @@
 #include <stddef.h> 
 #include <string.h>
 int main() {
-	if (!fork()) execlp("python3", "python3", "launch_speech.py", NULL);
-	if (!fork()) execlp("python3", "python3", "laser_distance.py", NULL);
-	if (!fork()) execlp("python3", "python3", "ultrasonic_distance.py", NULL);
+	if (!fork()) execl("speech", "speech", NULL);
+	sleep(1);
+	if (!fork()) execl("proxy", "proxy", NULL);
+	sleep(1);
+	if (!fork()) execlp("python3", "python3", "adapter1.py", NULL);
+	if (!fork()) execlp("python3", "python3", "adapter2.py", NULL);
 	if (!fork()) execl("position", "position", NULL);
-	//if (!fork()) execl("distance", "distance", NULL);
-	//if (!fork()) execl("voltage", "voltage", NULL);
-	//if (!fork()) execlp("python3", "python3", "vision.py", NULL);
-	//if (!fork()) execlp("python3", "python3", "test.py", NULL);
+	if (!fork()) execl("voltage", "voltage", NULL);
 	return 0;
 }

@@ -120,8 +120,8 @@ int main() {
 				//	printf("%s\n", response);
 
 					submit("assist.sock", response);
-				} else 
-					puts("GPS NOT FIXED");
+				} /*else 
+					puts("GPS NOT FIXED");*/
 			}
 		}
 		sleep(1);

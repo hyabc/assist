@@ -22,7 +22,6 @@ char msg[MAXBUF], response[MAXBUF];
 #define MIN_FRONT_DISTANCE 200
 #define INF 100000000
 const double PI = acos(-1.0);
-struct sockaddr_un addr;
 namespace laser {
 	double a[100];
 	double height;
@@ -75,7 +74,7 @@ namespace ultrasonic {
 }
 namespace position {
 	double distance;
-	char road1[500], road2[500], direction[500];
+	char road1[MAXBUF], road2[MAXBUF], direction[MAXBUF];
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		ss >> distance >> road1 >> road2 >> direction;
@@ -86,6 +85,7 @@ namespace position {
 int main() {
 	unlink("assist.sock");
 
+	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, "assist.sock");
@@ -100,10 +100,10 @@ int main() {
 		socklen_t new_addr_size = sizeof(new_addr);
 		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
 		int len = recv(clientfd, msg, MAXBUF, 0);
+		close(clientfd);
 
 		for (int i = 0;i < len;i++) putchar(msg[i]);
 		putchar('\n');
-		close(clientfd);
 
 		std::string line(msg + 1, len - 1);
 

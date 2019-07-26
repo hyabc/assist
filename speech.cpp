@@ -1,7 +1,6 @@
 #include <iostream>
 #include "assist.h"
 #include <fcntl.h>
-#include <mutex>
 #include <pthread.h>
 #include <uuid/uuid.h>
 #include <signal.h>

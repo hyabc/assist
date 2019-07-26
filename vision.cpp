@@ -1,6 +1,4 @@
-extern "C" {
 #include "darknet.h"
-}
 #include <cstdio>
 #include <ctime>
 #include <cstdlib>

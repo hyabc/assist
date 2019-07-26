@@ -83,12 +83,12 @@ namespace position {
 	}
 }
 int main() {
-	unlink("assist.sock");
+	unlink("proxy.sock");
 
 	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	strcpy(addr.sun_path, "assist.sock");
+	strcpy(addr.sun_path, "proxy.sock");
 
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));

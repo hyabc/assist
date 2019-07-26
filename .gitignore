@@ -22,8 +22,7 @@ yolov3-tiny.weights
 yolov3-tiny.cfg
 data/
 vision
-voice
-voice.mp3
+*.mp3
 speech
 voice/
 audio.sh

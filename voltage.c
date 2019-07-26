@@ -17,7 +17,7 @@ char msg[MAXBUF];
 int main() {	
 	while (1) {	
 		sprintf(msg, "%d\n", get_voltage());	
-		submit("assist.sock", msg);
+		submit("proxy.sock", msg);
 		sleep(10);
 	}	
 	return 0;	

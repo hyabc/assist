@@ -119,7 +119,7 @@ int main() {
 					sprintf(response, "P%s %s %s %s", distance, road1, road2, direction);
 				//	printf("%s\n", response);
 
-					submit("assist.sock", response);
+					submit("proxy.sock", response);
 				} /*else 
 					puts("GPS NOT FIXED");*/
 			}

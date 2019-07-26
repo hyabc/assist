@@ -7,7 +7,7 @@ for i in range(5):
 while 1:
 	result = ser.readline()
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-	sock.connect("assist.sock");
+	sock.connect("proxy.sock");
 	sock.sendall(result);
 	sock.close()
 ser.close()

@@ -26,3 +26,6 @@ voice
 voice.mp3
 speech
 voice/
+audio.sh
+proxy
+spawn

@@ -1,4 +1,5 @@
 #include <iostream>
+#include "assist.h"
 #include <fcntl.h>
 #include <mutex>
 #include <pthread.h>
@@ -20,7 +21,6 @@
 #include "curl/curl.h"
 #include "jsoncpp/json/json.h"
 using namespace std;
-#define MAXBUF 10000
 #define MAX_Q1_SIZE 3
 #define MAX_Q2_SIZE 3
 char msg[MAXBUF];
@@ -165,13 +165,16 @@ int main() {
 	sem_init(&sem2, 0, 0);
     curl_global_init(CURL_GLOBAL_ALL);
 	unlink("speech.sock");
+
 	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path, "speech.sock");
+
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	listen(sockfd, 10);
+
 	pthread_t thread1, thread2;
 	pthread_create(&thread1, NULL, thread_func1, NULL);
 	pthread_create(&thread2, NULL, thread_func2, NULL);
@@ -181,6 +184,7 @@ int main() {
 		int clientfd = accept(sockfd, (struct sockaddr *)&new_addr, &new_addr_size);
 		int len = recv(clientfd, msg, MAXBUF, 0);
 		close(clientfd);
+
 		node x(msg, len);
 
 		pthread_mutex_lock(&mutex1);

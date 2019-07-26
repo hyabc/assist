@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "assist.h"
 #include <libxml/parser.h>
 #include <gps.h>
 #include <stdlib.h>
@@ -20,14 +21,8 @@ size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer) {
 	return realsize;
 }
 char coordinateChangeRequest[500], coordinateChangeResult[500], revGeoRequest[500];
-char response[500];
-
+char response[500], road1[500], road2[500], distance[500], direction[500];
 int main() {
-	struct sockaddr_un addr;
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
-	strcpy(addr.sun_path, "assist.sock");
-
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	struct gps_data_t gps_data;
@@ -39,6 +34,7 @@ int main() {
 			if (gps_read(&gps_data) != -1) {
 				if (gps_data.status == STATUS_FIX && (gps_data.fix.mode == MODE_2D || gps_data.fix.mode == MODE_3D)) {
 //					printf("(%lf,%lf)-> ", gps_data.fix.longitude, gps_data.fix.latitude);
+					printf("HEADING: %lf\n", gps_data.fix.track); /**< GNSS course angle [degree] (0 => north, 90 => east, 180 => south, 270 => west, no negative values). */
 					struct string result;
 					result.str = malloc(1);
 					result.size = 0;
@@ -77,7 +73,6 @@ int main() {
 					curl_easy_perform(curl);
 					doc = xmlParseMemory(result.str, result.size);
 					cur = xmlDocGetRootElement(doc);
-					response[0] = 0;
 					while (cur) {
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"response")) {
 							xmlNodePtr cur1 = cur->xmlChildrenNode;
@@ -92,21 +87,16 @@ int main() {
 													xmlNodePtr cur4 = cur3->xmlChildrenNode;
 													while (cur4) {
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) {
-															strcat(response, "方向");
-															strcat(response, cur4->children->content);
-															strcat(response, ", ");
+															strcpy(direction, cur4->children->content);
 														}
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) {
-															strcat(response, cur4->children->content);
-															strcat(response, "米, ");
+															strcpy(distance, cur4->children->content);
 														}
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) {
-															strcat(response, cur4->children->content);
-															strcat(response, ", ");
+															strcpy(road1, cur4->children->content);
 														}
 														if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) {
-															strcat(response, cur4->children->content);
-															strcat(response, ", ");
+															strcpy(road2, cur4->children->content);
 														}
 														cur4 = cur4->next;
 													}
@@ -125,16 +115,16 @@ int main() {
 					curl_easy_cleanup(curl);
 					free(result.str);
 					xmlFreeDoc(doc);
-					//printf("%s\n", response);
-					int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-					connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-					send(sockfd, response, strlen(response), 0);
-					close(sockfd);
+
+					sprintf(response, "P%s %s %s %s", distance, road1, road2, direction);
+				//	printf("%s\n", response);
+
+					submit("assist.sock", response);
 				} else 
 					puts("GPS NOT FIXED");
 			}
 		}
-		sleep(0.5);
+		sleep(1);
 	}
 	gps_stream(&gps_data, WATCH_DISABLE, NULL);
 	gps_close(&gps_data);

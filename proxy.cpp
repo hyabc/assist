@@ -14,6 +14,14 @@ extern "C" {
 #include "assist.h"
 }
 
+#define abs(x) ({(x) > 0 ? (x) : -(x);})
+
+int position_state;
+/* position_state: 0 : on the road,
+					1: approaching roadinter,
+					2: away from roadinter
+					3: at roadinter*/
+
 char msg[MAXBUF], response[MAXBUF];
 #define MIN_ANGLE 90
 #define MAX_ANGLE 150
@@ -22,6 +30,8 @@ char msg[MAXBUF], response[MAXBUF];
 #define EPS 10
 #define MIN_FRONT_DISTANCE 200
 #define INF 100000000
+#define ROAD_THRESH_LARGE 20
+#define ROAD_THRESH_SMALL 3
 const double PI = acos(-1.0);
 
 namespace laser {
@@ -40,15 +50,15 @@ namespace laser {
 		}
 
 		for (int i = 1;i < size;i++)
-			if (fabs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
+			if (abs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
 				double delta = a[i] - a[0];
-				if (fabs(delta - height) < EPS) return;
+				if (abs(delta - height) < EPS) return;
 				height = delta;
 				if (height > 0) 
 					sprintf(response, "!前方%.2f米有向下台阶", a[i] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				else
 					sprintf(response, "!前方%.2f米有向上台阶", a[i] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
-				::submit("speech.sock", response);
+				submit("speech.sock", response);
 				return;
 			}
 	}
@@ -76,7 +86,7 @@ namespace ultrasonic {
 				sprintf(response, "!前方有障碍物，向左往前走");
 			else
 				sprintf(response, "!前方有障碍物，向右往前走");
-			::submit("speech.sock", response);
+			submit("speech.sock", response);
 			return;
 		}
 	}
@@ -85,9 +95,10 @@ namespace ultrasonic {
 namespace position {
 
 	int heading, road_direction, roadinter_direction;
-	char roadinter_direction_str[MAXBUF], roadinter_distance[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_direction_str[MAXBUF], road_distance[MAXBUF], road_name[MAXBUF];
+	char roadinter_direction_str[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_direction_str[MAXBUF], road_name[MAXBUF];
+	double road_distance, roadinter_distance;
 
-	int convert(char* str) {
+	int convert1(char* str) {
 		if (strcmp(str, "北") == 0) return 0;
 		if (strcmp(str, "东北") == 0) return 45;
 		if (strcmp(str, "东") == 0) return 90;
@@ -96,18 +107,54 @@ namespace position {
 		if (strcmp(str, "西南") == 0) return 225;
 		if (strcmp(str, "西") == 0) return 270;
 		if (strcmp(str, "西北") == 0) return 315;
-		printf("ALERT: direction=%s\n", str);
+//		printf("ALERT: direction=%s\n", str);
+	}
+
+	const char* convert2(int angle) {
+		if (angle < 23) return "北";
+		if (angle < 68) return "东北";
+		if (angle < 113) return "东";
+		if (angle < 158) return "东南";
+		if (angle < 203) return "南";
+		if (angle < 248) return "西南";
+		if (angle < 293) return "西";
+		if (angle < 338) return "西北";
+		return "北";
 	}
 
 	void solve(std::string line) {
 
 		std::stringstream ss(line);
-		ss >> heading >> road_direction_str >> road_distance >> road_name >> roadinter_direction_str >> roadinter_distance >> roadinter_name1 >> roadinter_name2;
-		road_direction = convert(road_direction_str);
-		roadinter_direction = convert(roadinter_direction_str);
+		ss >> heading >> road_direction_str >> road_distance >> road_name >>
+			roadinter_direction_str >> roadinter_distance >> roadinter_name1 >> roadinter_name2;
+		road_direction = convert1(road_direction_str);
+		roadinter_direction = convert1(roadinter_direction_str);
 
-		sprintf(response, " %s方向%s米是%s%s路口", roadinter_direction_str, roadinter_distance, roadinter_name1, roadinter_name2);
-		::submit("speech.sock", response);
+		if (roadinter_distance > ROAD_THRESH_LARGE) {
+			position_state = 0;
+			return;
+		}
+		if (roadinter_distance < ROAD_THRESH_SMALL) {
+			if (position_state != 3) {
+				position_state = 3;
+				sprintf(response, "!你在%s%s路口", roadinter_name1, roadinter_name2);
+				submit("speech.sock", response);
+			}
+			return;
+		}
+		if (abs(heading - roadinter_direction) < 90 || abs(heading - roadinter_direction) > 270) {
+			if (position_state != 1) {
+				position_state = 1;
+				sprintf(response, " 前方%d米是%s%s路口", (int)(round(roadinter_distance)), roadinter_name1, roadinter_name2);
+				submit("speech.sock", response);
+			}
+		} else {
+			if (position_state != 2) {
+				position_state = 2;
+				sprintf(response, " 你所在%s路，方向%s", road_name, convert2(road_direction));
+				submit("speech.sock", response);
+			}
+		}
 	}
 }
 
@@ -118,7 +165,7 @@ namespace monitor {
 		ss >> volt;
 		if (volt < 10500) {
 			sprintf(response, " 电池电量低");
-			::submit("speech.sock", response);
+			submit("speech.sock", response);
 		} else if (volt < 10000) {
 			sync();
 			system("sudo poweroff");
@@ -139,6 +186,8 @@ int main() {
 	listen(sockfd, 10);
 
 	laser::height = 0;
+	position_state = 0;
+
 	while (1) {
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);

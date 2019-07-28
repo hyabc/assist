@@ -160,7 +160,6 @@ int main() {
 				} else 
 					puts("GPS NOT FIXED");
 
-				sleep(5);
 			}
 		}
 		sleep(1);

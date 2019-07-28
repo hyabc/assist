@@ -5,8 +5,8 @@ VL53L0X_RangingMeasurementData_t dist;
 Servo servo;
 int angle;
 #define MAXANGLE 150
-#define MINANGLE 70
-#define DELTAANGLE 5
+#define MINANGLE 90
+#define DELTAANGLE 2
 void setup() {
 	Serial.begin(115200);
 	while (!Serial) delay(1);
@@ -17,7 +17,7 @@ void loop() {
 	Serial.print('L');
 	for (angle = MINANGLE;angle <= MAXANGLE;angle += DELTAANGLE) {
 		servo.write(angle);
-		delay(50);
+		delay(20);
 		sensor.rangingTest(&dist, false);
 		if (dist.RangeStatus != 4)
 			Serial.print(dist.RangeMilliMeter);
@@ -27,7 +27,7 @@ void loop() {
 	}
 	for (angle = MAXANGLE;angle >= MINANGLE;angle -= DELTAANGLE) {
 		servo.write(angle);
-		delay(50);
+		delay(20);
 	}
 //	delay(200);
 	Serial.println();

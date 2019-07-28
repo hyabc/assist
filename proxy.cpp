@@ -65,8 +65,11 @@ namespace laser {
 }
 
 namespace ultrasonic {
+
 	int a[3];
 	void solve(std::string line) {
+
+		if (position_state != 3) return;
 
 		std::stringstream ss(line);
 		for (int i = 0;i < 3;i++) {
@@ -159,16 +162,51 @@ namespace position {
 }
 
 namespace monitor {
+
 	int volt;
+
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		ss >> volt;
+
 		if (volt < 10500) {
 			sprintf(response, " 电池电量低");
 			submit("speech.sock", response);
 		} else if (volt < 10000) {
 			sync();
 			system("sudo poweroff");
+		}
+	}
+}
+
+namespace vision {
+
+	int status;
+	void solve(std::string line) {
+	
+		if (position_state != 3) {
+			status = -1;
+			return;
+		}
+
+		int cur;
+		std::stringstream ss(line);
+		ss >> cur;
+
+		if (cur == -1) return;
+
+		if (cur != status) {
+			if (cur == 0) {
+				if (status != 1) {
+					sprintf(response, "!红灯");
+					submit("speech.sock", response);
+				}
+			}
+			if (cur == 1) {
+				sprintf(response, "!绿灯");
+				submit("speech.sock", response);
+			}
+			status = cur;
 		}
 	}
 }
@@ -215,6 +253,10 @@ int main() {
 
 			case 'M':
 				monitor::solve(line);
+				break;
+
+			case 'V':
+				vision::solve(line);
 				break;
 		}
 

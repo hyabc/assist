@@ -3,7 +3,12 @@
 #include <ctime>
 #include <cstdlib>
 #include <opencv2/opencv.hpp>
-extern "C" {image mat_to_image(cv::Mat);}
+extern "C" {
+image mat_to_image(cv::Mat);
+}
+extern "C" {
+#include "assist.h"
+}
 
 #define thresh 0.5
 #define hier_thresh 0.5
@@ -11,8 +16,7 @@ extern "C" {image mat_to_image(cv::Mat);}
 #define max(x, y) ({x > y ? x : y;})
 #define min(x, y) ({x < y ? x : y;})
 
-char buffer[100];
-char buf[100];
+char buf[MAXBUF];
 
 namespace traffic_light {
 	double area;
@@ -52,6 +56,7 @@ int main() {
 	cv::VideoCapture cap(1);
 	cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
 	cap.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+
 	char **names = get_labels("data/coco.names");
 	image **alphabet = load_alphabet();
 	//network *net = load_network("yolov3-tiny.cfg", "yolov3-tiny.weights", 0);
@@ -59,14 +64,14 @@ int main() {
 	set_batch_network(net, 1);
 	layer l = net->layers[net->n-1];
 
-	for (int iter = 1;iter <= 1;iter++) {
+	for (int iter = 1;/*iter <= 1*/;iter++) {
 		traffic_light::cur_option = -1;
 
 		printf("BEGIN %d\n", iter);
 //		time_t start = clock();
 		cv::Mat f;
-		//cap >> f;
-		f = cv::imread("a.jpg");
+		cap >> f;
+//		f = cv::imread("a.jpg");
 		image frame = mat_to_image(f);
 		image sized = letterbox_image(frame, net->w, net->h);
 
@@ -103,7 +108,7 @@ int main() {
 				printf("(%f, %f) size: (%f, %f) %d~%d, %d~%d, %s, prob=%f\n", b.x, b.y, b.w, b.h, left, right, top, bottom, name, maxprob);
 
 				sprintf(buf, "%d_detect%d.jpg", iter, i);
-				imwrite(buf, subgraph);
+//				imwrite(buf, subgraph);
 
 				if (strcmp(name, "traffic light") == 0) {
 					traffic_light::judge(subgraph, 0);
@@ -112,15 +117,19 @@ int main() {
 					
 			}
 		}
-		free_detections(dets, count);
 		sprintf(buf, "%d", iter);
-		save_image(frame, buf);
+//		save_image(frame, buf);
+
+		free_detections(dets, count);
 		free_image(frame);
 		free_image(sized);
 //		printf("%f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 		if (traffic_light::cur_option != -1) 
 			printf("Color: %s\n", traffic_light::cur_option == 0 ? "Red" : "Green");
+		
+		sprintf(buf, "V%d", traffic_light::cur_option);
+		submit("proxy.sock", buf);
 	}
 	return 0;
 }

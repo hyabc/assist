@@ -23,7 +23,7 @@ int position_state;
 					3: at roadinter*/
 
 char msg[MAXBUF], response[MAXBUF];
-#define MIN_ANGLE 90
+#define MIN_ANGLE 60
 #define MAX_ANGLE 150
 #define DELTA_ANGLE 5
 #define MIN_STAIRCASE_HEIGHT 50
@@ -36,22 +36,26 @@ const double PI = acos(-1.0);
 
 namespace laser {
 
-	double a[100];
+	double a[MAXBUF], x[MAXBUF];
 	double height;
 
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		int size = (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1;
+
+		int ptr = 0;
 		for (int i = 0;i < size;i++) {
-			int dist;
-			ss >> dist;
-			if (dist == -1) dist = INF;
-			a[i] = (double)(dist) * cos((double)(DELTA_ANGLE) * i * PI / 180.0);
+			ss >> x[i];
+			if (x[i] == -1) x[i] = INF;
+			if (x[i] < x[ptr]) ptr = i;
 		}
 
+		for (int i = ptr;i < size;i++) 
+			a[i] = x[i] * cos((double)(DELTA_ANGLE) * (i - ptr) * PI / 180.0);
+
 		for (int i = 1;i < size;i++)
-			if (abs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
-				double delta = a[i] - a[0];
+			if (abs(a[i] - a[ptr]) > MIN_STAIRCASE_HEIGHT) {
+				double delta = a[i] - a[ptr];
 				if (abs(delta - height) < EPS) return;
 				height = delta;
 				if (height > 0) 

@@ -33,6 +33,7 @@ void loop() {
 		else 
 			Serial.print(-1);
 		Serial.print(' ');
+		delay(300);
 	}
 	Serial.println();
 }

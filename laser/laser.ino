@@ -2,12 +2,11 @@
 #include <VL53L0X.h>
 #include <Servo.h>
 VL53L0X sensor;
-VL53L0X_RangingMeasurementData_t dist;
 Servo servo;
 int angle;
 #define MAXANGLE 150
 #define MINANGLE 90
-#define DELTAANGLE 2
+#define DELTAANGLE 5
 void setup() {
 	Serial.begin(115200);
 	Wire.begin();
@@ -20,14 +19,15 @@ void loop() {
 	Serial.print('L');
 	for (angle = MINANGLE;angle <= MAXANGLE;angle += DELTAANGLE) {
 		servo.write(angle);
-		delay(20);
+		delay(100);
 		Serial.print(sensor.readRangeContinuousMillimeters());
 		Serial.print(' ');
 	}
-	for (angle = MAXANGLE;angle >= MINANGLE;angle -= DELTAANGLE) {
+/*	for (angle = MAXANGLE;angle >= MINANGLE;angle -= DELTAANGLE) {
 		servo.write(angle);
 		delay(10);
-	}
-	delay(50);
+	}*/
+	servo.write(MINANGLE);
+	delay(300);
 	Serial.println();
 }

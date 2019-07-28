@@ -16,7 +16,7 @@ int get_voltage() {
 char msg[MAXBUF];	
 int main() {	
 	while (1) {	
-		sprintf(msg, "%d\n", get_voltage());	
+		sprintf(msg, "M%d\n", get_voltage());
 		submit("proxy.sock", msg);
 		sleep(10);
 	}	

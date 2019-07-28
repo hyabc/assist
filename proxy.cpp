@@ -22,6 +22,7 @@ char msg[MAXBUF], response[MAXBUF];
 #define MIN_FRONT_DISTANCE 200
 #define INF 100000000
 const double PI = acos(-1.0);
+
 namespace laser {
 	double a[100];
 	double height;
@@ -48,6 +49,7 @@ namespace laser {
 			}
 	}
 }
+
 namespace ultrasonic {
 	int a[3];
 	void solve(std::string line) {
@@ -72,16 +74,34 @@ namespace ultrasonic {
 		}
 	}
 }
+
 namespace position {
 	double distance;
 	char road1[MAXBUF], road2[MAXBUF], direction[MAXBUF];
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		ss >> distance >> road1 >> road2 >> direction;
+
 		sprintf(response, " %s方向%lf米是%s%s路口", direction, distance, road1, road2);
 		::submit("speech.sock", response);
 	}
 }
+
+namespace monitor {
+	int volt;
+	void solve(std::string line) {
+		std::stringstream ss(line);
+		ss >> volt;
+		if (volt < 10500) {
+			sprintf(response, " 电池电量低");
+			::submit("speech.sock", response);
+		} else if (volt < 10000) {
+			sync();
+			system("sudo poweroff");
+		}
+	}
+}
+
 int main() {
 	unlink("proxy.sock");
 
@@ -118,6 +138,10 @@ int main() {
 
 			case 'P':
 				position::solve(line);
+				break;
+
+			case 'M':
+				monitor::solve(line);
 				break;
 		}
 

@@ -34,7 +34,7 @@ int main() {
 			if (gps_read(&gps_data) != -1) {
 				if (gps_data.status == STATUS_FIX && (gps_data.fix.mode == MODE_2D || gps_data.fix.mode == MODE_3D)) {
 //					printf("(%lf,%lf)-> ", gps_data.fix.longitude, gps_data.fix.latitude);
-					printf("HEADING: %lf\n", gps_data.fix.track); /**< GNSS course angle [degree] (0 => north, 90 => east, 180 => south, 270 => west, no negative values). */
+					printf("HEADING: %lf, SPEED %lf\n", gps_data.fix.track, gps_data.fix.speed); /**< GNSS course angle [degree] (0 => north, 90 => east, 180 => south, 270 => west, no negative values). */
 					struct string result;
 					result.str = malloc(1);
 					result.size = 0;

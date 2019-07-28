@@ -18,5 +18,7 @@ int main() {
 	if (!fork()) execl("position", "position", NULL);
 	if (!fork()) execl("voltage", "voltage", NULL);
 
+	pause();
+
 	return 0;
 }

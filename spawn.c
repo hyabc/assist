@@ -13,10 +13,10 @@ int main() {
 
 	sleep(1);
 
-/*	if (!fork()) execlp("python3", "python3", "adapter1.py", NULL);
-	if (!fork()) execlp("python3", "python3", "adapter2.py", NULL);*/
-	if (!fork()) execl("position", "position", NULL);
-	if (!fork()) execl("voltage", "voltage", NULL);
+	if (!fork()) execlp("python3", "python3", "adapter0.py", NULL);
+	if (!fork()) execlp("python3", "python3", "adapter1.py", NULL);
+/*	if (!fork()) execl("position", "position", NULL);
+	if (!fork()) execl("voltage", "voltage", NULL);*/
 
 	pause();
 

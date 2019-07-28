@@ -28,7 +28,7 @@ char msg[MAXBUF], response[MAXBUF];
 #define DELTA_ANGLE 5
 #define MIN_STAIRCASE_HEIGHT 50
 #define EPS 10
-#define MIN_FRONT_DISTANCE 200
+#define MIN_FRONT_DISTANCE 90
 #define INF 100000000
 #define ROAD_THRESH_LARGE 20
 #define ROAD_THRESH_SMALL 3
@@ -69,9 +69,10 @@ namespace laser {
 namespace ultrasonic {
 
 	int a[3];
+	bool left, middle, right;
 	void solve(std::string line) {
 
-		if (position_state != 3) return;
+		if (position_state == 3) return;
 
 		std::stringstream ss(line);
 		for (int i = 0;i < 3;i++) {
@@ -79,8 +80,11 @@ namespace ultrasonic {
 			if (a[i] == -1) a[i] = INF;
 		}
 
+		left = (a[0] < MIN_FRONT_DISTANCE);
+		middle = (a[1] < MIN_FRONT_DISTANCE);
+		right = (a[2] < MIN_FRONT_DISTANCE);
 		bool left = a[0] < MIN_FRONT_DISTANCE, middle = a[1] < MIN_FRONT_DISTANCE, right = a[2] < MIN_FRONT_DISTANCE;
-		printf("%d %d %d\n", a[0], a[1], a[2]);
+//		printf("%d %d %d\n", a[0], a[1], a[2]);
 
 		if (middle) {
 			if (left && !right)

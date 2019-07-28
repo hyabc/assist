@@ -1,6 +1,7 @@
-#include "Adafruit_VL53L0X.h"
+#include <Wire.h>
+#include <VL53L0X.h>
 #include <Servo.h>
-Adafruit_VL53L0X sensor = Adafruit_VL53L0X();
+VL53L0X sensor;
 VL53L0X_RangingMeasurementData_t dist;
 Servo servo;
 int angle;
@@ -9,8 +10,10 @@ int angle;
 #define DELTAANGLE 2
 void setup() {
 	Serial.begin(115200);
-	while (!Serial) delay(1);
-	sensor.begin();
+	Wire.begin();
+	sensor.init();
+	sensor.setTimeout(500);
+	sensor.startContinuous();
 	servo.attach(11);
 }
 void loop() {
@@ -18,17 +21,13 @@ void loop() {
 	for (angle = MINANGLE;angle <= MAXANGLE;angle += DELTAANGLE) {
 		servo.write(angle);
 		delay(20);
-		sensor.rangingTest(&dist, false);
-		if (dist.RangeStatus != 4)
-			Serial.print(dist.RangeMilliMeter);
-		else
-			Serial.print(-1);
+		Serial.print(sensor.readRangeContinuousMillimeters());
 		Serial.print(' ');
 	}
 	for (angle = MAXANGLE;angle >= MINANGLE;angle -= DELTAANGLE) {
 		servo.write(angle);
-		delay(20);
+		delay(10);
 	}
-//	delay(200);
+	delay(50);
 	Serial.println();
 }

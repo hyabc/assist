@@ -96,7 +96,7 @@ namespace position {
 		if (strcmp(str, "西南") == 0) return 225;
 		if (strcmp(str, "西") == 0) return 270;
 		if (strcmp(str, "西北") == 0) return 315;
-		puts("ALERT: direction=%s\n", str);
+		printf("ALERT: direction=%s\n", str);
 	}
 
 	void solve(std::string line) {
@@ -106,7 +106,7 @@ namespace position {
 		road_direction = convert(road_direction_str);
 		roadinter_direction = convert(roadinter_direction_str);
 
-		sprintf(response, " %s方向%lf米是%s%s路口", direction, distance, road1, road2);
+		sprintf(response, " %s方向%s米是%s%s路口", roadinter_direction_str, roadinter_distance, roadinter_name1, roadinter_name2);
 		::submit("speech.sock", response);
 	}
 }

@@ -72,8 +72,8 @@ int main() {
 					result.size = 0;
 
 					curl = curl_easy_init();
-					curl_easy_setopt(curl, CURLOPT_URL, revGeoRequest);
 					sprintf(revGeoRequest, "https://restapi.amap.com/v3/geocode/regeo?output=xml&location=%s&key=%s&extensions=all", coordinateChangeResult, getenv("amapkey"));
+					curl_easy_setopt(curl, CURLOPT_URL, revGeoRequest);
 					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeToString);
 					curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&result);
 					curl_easy_perform(curl);
@@ -155,10 +155,12 @@ int main() {
 
 					sprintf(response, "P%d %s %s %s %s %s %s %s", (int)(round(gps_data.fix.track)), road_direction, road_distance, road_name, roadinter_direction, roadinter_distance, roadinter_name1, roadinter_name2);
 					submit("proxy.sock", response);
-				//	printf("%s\n", response);
+//					printf("%s\n", response);
 
 				} else 
 					puts("GPS NOT FIXED");
+
+				sleep(5);
 			}
 		}
 		sleep(1);

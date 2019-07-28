@@ -13,6 +13,7 @@
 extern "C" {
 #include "assist.h"
 }
+
 char msg[MAXBUF], response[MAXBUF];
 #define MIN_ANGLE 90
 #define MAX_ANGLE 150
@@ -24,8 +25,10 @@ char msg[MAXBUF], response[MAXBUF];
 const double PI = acos(-1.0);
 
 namespace laser {
+
 	double a[100];
 	double height;
+
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		int size = (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1;
@@ -35,6 +38,7 @@ namespace laser {
 			if (dist == -1) dist = INF;
 			a[i] = (double)(dist) * cos((double)(DELTA_ANGLE) * i * PI / 180.0);
 		}
+
 		for (int i = 1;i < size;i++)
 			if (fabs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
 				double delta = a[i] - a[0];
@@ -53,13 +57,16 @@ namespace laser {
 namespace ultrasonic {
 	int a[3];
 	void solve(std::string line) {
+
 		std::stringstream ss(line);
 		for (int i = 0;i < 3;i++) {
 			ss >> a[i];
 			if (a[i] == -1) a[i] = INF;
 		}
+
 		bool left = a[0] < MIN_FRONT_DISTANCE, middle = a[1] < MIN_FRONT_DISTANCE, right = a[2] < MIN_FRONT_DISTANCE;
 		printf("%d %d %d\n", a[0], a[1], a[2]);
+
 		if (middle) {
 			if (left && !right)
 				sprintf(response, "!前方有障碍物，向右往前走");
@@ -76,11 +83,28 @@ namespace ultrasonic {
 }
 
 namespace position {
-	double distance;
-	char road1[MAXBUF], road2[MAXBUF], direction[MAXBUF];
+
+	int heading, road_direction, roadinter_direction;
+	char roadinter_direction_str[MAXBUF], roadinter_distance[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_direction_str[MAXBUF], road_distance[MAXBUF], road_name[MAXBUF];
+
+	int convert(char* str) {
+		if (strcmp(str, "北") == 0) return 0;
+		if (strcmp(str, "东北") == 0) return 45;
+		if (strcmp(str, "东") == 0) return 90;
+		if (strcmp(str, "东南") == 0) return 135;
+		if (strcmp(str, "南") == 0) return 180;
+		if (strcmp(str, "西南") == 0) return 225;
+		if (strcmp(str, "西") == 0) return 270;
+		if (strcmp(str, "西北") == 0) return 315;
+		puts("ALERT: direction=%s\n", str);
+	}
+
 	void solve(std::string line) {
+
 		std::stringstream ss(line);
-		ss >> distance >> road1 >> road2 >> direction;
+		ss >> heading >> road_direction_str >> road_distance >> road_name >> roadinter_direction_str >> roadinter_distance >> roadinter_name1 >> roadinter_name2;
+		road_direction = convert(road_direction_str);
+		roadinter_direction = convert(roadinter_direction_str);
 
 		sprintf(response, " %s方向%lf米是%s%s路口", direction, distance, road1, road2);
 		::submit("speech.sock", response);

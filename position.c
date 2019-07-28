@@ -153,7 +153,7 @@ int main() {
 //					printf("(%lf,%lf)-> ", gps_data.fix.longitude, gps_data.fix.latitude);
 //					printf("HEADING: %lf, SPEED %lf\n", gps_data.fix.track, gps_data.fix.speed); /**< GNSS course angle [degree] (0 => north, 90 => east, 180 => south, 270 => west, no negative values). */
 
-					sprintf(response, "P%lf %s %s %s %s %s %s %s", gps_data.fix.track, road_direction, road_distance, road_name, roadinter_direction, roadinter_distance, roadinter_name1, roadinter_name2);
+					sprintf(response, "P%d %s %s %s %s %s %s %s", (int)(round(gps_data.fix.track)), road_direction, road_distance, road_name, roadinter_direction, roadinter_distance, roadinter_name1, roadinter_name2);
 					submit("proxy.sock", response);
 				//	printf("%s\n", response);
 

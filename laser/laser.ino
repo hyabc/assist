@@ -4,6 +4,7 @@ int angle;
 
 void setup() {
 	Serial.begin(115200);
+	servo.write(90);
 	servo.attach(11);
 }
 

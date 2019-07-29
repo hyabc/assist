@@ -1,6 +1,7 @@
 #include <Servo.h>
 
 int angle;
+Servo servo;
 
 void setup() {
 	Serial.begin(115200);

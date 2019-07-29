@@ -70,7 +70,8 @@ int main() {
 //		printf("BEGIN %d\n", iter);
 //		time_t start = clock();
 		cv::Mat f;
-		cap >> f;
+		for (int t = 1;t <= 10;t++) 
+			cap >> f;
 //		f = cv::imread("a.jpg");
 		image frame = mat_to_image(f);
 		image sized = letterbox_image(frame, net->w, net->h);

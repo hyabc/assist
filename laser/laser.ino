@@ -10,6 +10,6 @@ void setup() {
 }
 
 void loop() {
-	angle = Serial.read();
+	angle = Serial.parseInt();
 	servo.write(angle);
 }

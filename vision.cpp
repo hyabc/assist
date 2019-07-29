@@ -67,7 +67,7 @@ int main() {
 	for (int iter = 1;/*iter <= 1*/;iter++) {
 		traffic_light::cur_option = -1;
 
-		printf("BEGIN %d\n", iter);
+//		printf("BEGIN %d\n", iter);
 //		time_t start = clock();
 		cv::Mat f;
 		cap >> f;

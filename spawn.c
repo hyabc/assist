@@ -15,6 +15,7 @@ int main() {
 
 	if (!fork()) execlp("python3", "python3", "adapter0.py", NULL);
 	if (!fork()) execlp("python3", "python3", "adapter1.py", NULL);
+	if (!fork()) execl("monitor", "monitor", NULL);
 /*	if (!fork()) execl("position", "position", NULL);
 	if (!fork()) execl("voltage", "voltage", NULL);*/
 

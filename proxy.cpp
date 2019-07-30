@@ -23,10 +23,10 @@ int position_state;
 					3: at roadinter*/
 
 char msg[MAXBUF], response[MAXBUF];
-#define MIN_ANGLE 60
-#define MAX_ANGLE 150
-#define DELTA_ANGLE 5
-#define MIN_STAIRCASE_HEIGHT 50
+#define MIN_ANGLE 90
+#define MAX_ANGLE 140
+#define DELTA_ANGLE 2
+#define MIN_STAIRCASE_HEIGHT 120
 #define EPS 10
 #define MIN_FRONT_DISTANCE 90
 #define INF 100000000
@@ -51,8 +51,16 @@ namespace laser {
 		for (int i = 0;i < size;i++) 
 			a[i] = x[i] * cos((double)(DELTA_ANGLE) * i * PI / 180.0);
 
+		for (int i = 0;i < size;i++) 
+			printf("%d ", (int)(round(a[i])));
+		printf("\n");
+		printf("\n");
+		printf("\n");
+
+
 		for (int i = 1;i < size;i++)
 			if (abs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
+				puts("ALERT!!!");
 				double delta = a[i] - a[0];
 				if (abs(delta - height) < EPS) return;
 				height = delta;
@@ -88,13 +96,13 @@ namespace ultrasonic {
 
 		if (middle) {
 			if (left && !right)
-				sprintf(response, "!前方有障碍物，向右往前走");
+				sprintf(response, "!前方有障碍物，向右");
 			else if (right && !left)
-				sprintf(response, "!前方有障碍物，向左往前走");
+				sprintf(response, "!前方有障碍物，向左");
 			else if (a[0] > a[2]) 
-				sprintf(response, "!前方有障碍物，向左往前走");
+				sprintf(response, "!前方有障碍物，向左");
 			else
-				sprintf(response, "!前方有障碍物，向右往前走");
+				sprintf(response, "!前方有障碍物，向右");
 			submit("speech.sock", response);
 			return;
 		}

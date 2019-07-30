@@ -3,7 +3,7 @@
 #include <sys/un.h>
 #include <sys/types.h>
 #include <string.h>
-void submit(const char* sockname, char* msg) {
+void submit(const char* sockname, const char* msg) {
 	struct sockaddr_un addr;	
 	memset(&addr, 0, sizeof(addr));	
 	addr.sun_family = AF_UNIX;	

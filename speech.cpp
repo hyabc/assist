@@ -63,18 +63,19 @@ size_t body_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	(*str).append(string((char*)(ptr), (char*)(ptr) + len));
 	return len;
 }
-void generate(const node& x) {
+void generate(node* x) {
 	CURL* curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts");
 	curl_easy_setopt(curl, CURLOPT_POST, 1L);
-	struct curl_slist* headers = curl_slist_append(headers, "Content-Type:application/json");
+	struct curl_slist* headers = NULL;
+	headers = curl_slist_append(headers, "Content-Type:application/json");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 	Json::Value root;
 	Json::FastWriter writer;
 	root["appkey"] = getenv("appKey");
 	root["token"] = getenv("token");
-	root["text"] = x.content;
+	root["text"] = x->content;
 	root["format"] = "mp3";
 	root["sample_rate"] = "16000";
 	root["voice"] = "ruoxi";
@@ -97,7 +98,7 @@ void generate(const node& x) {
 	map<string, string>::iterator iter = responseHeaders.find("Content-Type");
 	if (iter != responseHeaders.end() && iter->second.compare("audio/mpeg") == 0) {
 		ofstream stream;
-		stream.open(x.name, ios::out | ios::binary);
+		stream.open(x->name, ios::out | ios::binary);
 		stream.write(bodyContent.c_str(), bodyContent.size());
 		stream.close();
 	}
@@ -105,56 +106,67 @@ void generate(const node& x) {
 void* thread_func1(void* arg) {
 	while (1) {
 		sem_wait(&sem1);
-		pthread_mutex_lock(&mutex1);
-		int size = q1.size();
-		pthread_mutex_unlock(&mutex1);
-		if (size > 0) {
-			pthread_mutex_lock(&mutex1);
-			node x = q1.front();
-			q1.pop();
-			//printf("1 - %s\n", x.name);
-			pthread_mutex_unlock(&mutex1);
 
+		node* x = 0;
+
+		pthread_mutex_lock(&mutex1);
+		if (q1.size() > 0) {
+			x = new node(q1.front());
+			q1.pop();
+		}
+		pthread_mutex_unlock(&mutex1);
+
+		if (x != 0) {
 			generate(x);
 
 			pthread_mutex_lock(&mutex2);
-			if (x.important) {
-				while (q2.size()) q2.pop();
+			if (x->important) {
+				while (q2.size()) {
+					unlink(q2.front().name);
+					q2.pop();
+				}
 
 				pthread_mutex_lock(&mutex3);
 				if (playPID != -1) kill(playPID, SIGKILL);
 				pthread_mutex_unlock(&mutex3);
 			}
-			q2.push(x);
-			sem_post(&sem2);
 			while (q2.size() > MAX_Q2_SIZE) q2.pop();
+			q2.push(*x);
 			pthread_mutex_unlock(&mutex2);
+
+			sem_post(&sem2);
+
+			delete x;
 		}
 	}
 }
 void* thread_func2(void* arg) {
 	while (1) {
 		sem_wait(&sem2);
-		pthread_mutex_lock(&mutex2);
-		int size = q2.size();
-		pthread_mutex_unlock(&mutex2);
-		if (size > 0) {
-			pthread_mutex_lock(&mutex2);
-			node x = q2.front();
-			q2.pop();
-			pthread_mutex_unlock(&mutex2);
 
-			std::cout << "NOW PLAY: " << x.content << std::endl;
+		node* x = 0;
+
+		pthread_mutex_lock(&mutex2);
+		if (q2.size() > 0) {
+			x = new node(q2.front());
+			q2.pop();
+		}
+		pthread_mutex_unlock(&mutex2);
+
+		if (x != 0) {
+			std::cout << "NOW PLAY: " << x->content << " with name " << x->name << std::endl;
+
 			int PID = fork();
 			if (!PID) {
-				execlp("play", "play", x.name, NULL);
-			} else if (!x.important) {
+				execlp("play", "play", x->name, NULL);
+			} else if (!x->important) {
 				pthread_mutex_lock(&mutex3);
 				playPID = PID;
 				pthread_mutex_unlock(&mutex3);
 			}
 			wait(0);
-			unlink(x.name);
+			unlink(x->name);
+			delete x;
 		}
 	}
 }
@@ -186,13 +198,15 @@ int main() {
 		close(clientfd);
 
 		node x(msg, len);
+		printf("speak: %s\n", x.content.c_str());
 
 		pthread_mutex_lock(&mutex1);
 		if (x.important) {while (q1.size()) q1.pop();}
-		q1.push(x);
-		sem_post(&sem1);
 		while (q1.size() > MAX_Q1_SIZE) q1.pop();
+		q1.push(x);
 		pthread_mutex_unlock(&mutex1);
+
+		sem_post(&sem1);
 	}
     curl_global_cleanup();
 	sem_destroy(&sem1);

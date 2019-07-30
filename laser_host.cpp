@@ -1,18 +1,21 @@
 #include <stdlib.h>
+#include <sstream>
 #include <termios.h> 
 #include <unistd.h> 
 #include <fcntl.h> 
 #include <errno.h>
 #include <stdio.h>
-#include "assist.h"
 #include "vl53l0x_api.h"
 #include "vl53l0x_platform.h"
+extern "C" {
+#include "assist.h"
+}
 
-#define MAX_ANGLE 150
+#define MAX_ANGLE 140
 #define MIN_ANGLE 90
 #define DELTA_ANGLE 2
 
-char buf[MAXBUF];
+char buf[MAXBUF], msg[MAXBUF];
 int dist[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1];
 
 /*void WaitDataReady(VL53L0X_DEV dev) {
@@ -102,29 +105,38 @@ int main() {
 
 	VL53L0X_RangingMeasurementData_t measurementdata;
 
+			serialport_write(serialfd, 90);
+			sleep(2);
+
 	for (int iter = 1;iter <= 50;iter++) {
 
 		for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 			serialport_write(serialfd, angle);
-			usleep(20000);
+			usleep(2000);
 
 			VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
 
 			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
 
 		}
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", dist[i]);printf("\n");
+		std::stringstream ss1;
+		ss1 << "L";
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss1 << dist[i] << " ";
+		submit("proxy.sock", ss1.str().c_str());
 
 		for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
 			serialport_write(serialfd, angle);
-			usleep(20000);
+			usleep(2000);
 
 			VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
 
 			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
 
 		}
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", dist[i]);printf("\n");
+		std::stringstream ss2;
+		ss2 << "L";
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss2 << dist[i] << " ";
+		submit("proxy.sock", ss2.str().c_str());
 
 	}
 

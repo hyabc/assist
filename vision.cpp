@@ -109,7 +109,7 @@ int main() {
 				printf("(%f, %f) size: (%f, %f) %d~%d, %d~%d, %s, prob=%f\n", b.x, b.y, b.w, b.h, left, right, top, bottom, name, maxprob);
 
 				sprintf(buf, "%d_detect%d.jpg", iter, i);
-//				imwrite(buf, subgraph);
+				imwrite(buf, subgraph);
 
 				if (strcmp(name, "traffic light") == 0) {
 					traffic_light::judge(subgraph, 0);
@@ -119,7 +119,7 @@ int main() {
 			}
 		}
 		sprintf(buf, "%d", iter);
-//		save_image(frame, buf);
+		save_image(frame, buf);
 
 		free_detections(dets, count);
 		free_image(frame);

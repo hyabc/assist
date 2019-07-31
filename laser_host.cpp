@@ -16,13 +16,14 @@ extern "C" {
 #define MAX_ANGLE 130
 #define MIN_ANGLE 90
 #define DELTA_ANGLE 2
+#define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)
 
 #define CALIBRATION_NUM 5
 
 char buf[MAXBUF], msg[MAXBUF];
 int serialfd;
 VL53L0X_Dev_t sensor;
-int dist[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1], base[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1];
+int dist[SIZE], base[SIZE], cnt[SIZE], tot;
 
 /*void WaitDataReady(VL53L0X_DEV dev) {
 	uint8_t isready = 0;
@@ -109,9 +110,6 @@ void measure() {
 
 		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
 
-		if (dist[(angle - MIN_ANGLE) / DELTA_ANGLE] > 2000)
-			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = 2000;
-
 	}
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
@@ -133,19 +131,27 @@ int main() {
 	startmeasurement(&sensor);
 
 	memset(base, 0, sizeof(base));
+	memset(cnt, 0, sizeof(cnt));
+	tot = 0;
 
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
 	sleep(1);
 
-	for (int iter = 1;iter <= CALIBRATION_NUM;iter++) {
+	for (int iter = 1;iter <= CALIBRATION_NUM || tot < SIZE;iter++) {
 		measure();
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) base[i] += dist[i];
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", dist[i]);
+		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
 		printf("\n");
+		for (int i = 0;i < SIZE;i++) 
+			if (dist[i] < 2000) {
+				if (cnt[i] == 0) tot++;
+
+				cnt[i]++;
+				base[i] += dist[i];
+			}
 	}
-	for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) base[i] /= CALIBRATION_NUM;
+	for (int i = 0;i < SIZE;i++) base[i] /= cnt[i];
 	printf("========================CALIBRATION============================\n");
-	for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", base[i]);
+	for (int i = 0;i < SIZE;i++) printf("%d ", base[i]);
 	printf("\n===============================================================\n");
 
 	for (int iter = 1;;iter++) {

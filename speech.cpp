@@ -208,7 +208,7 @@ int main() {
 
 		sem_post(&sem1);
 	}
-    curl_global_cleanup();
+	curl_global_cleanup();
 	sem_destroy(&sem1);
 	sem_destroy(&sem2);
     return 0;

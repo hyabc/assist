@@ -40,7 +40,10 @@ int main() {
 	addr.sin_port = htons(5678);
 
 	int sockfd = socket(PF_INET, SOCK_STREAM, 0);
-	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+	while (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		puts("BIND FAILED");
+		sleep(1);
+	}
 	listen(sockfd, 10);
 
 	while (1) {

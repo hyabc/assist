@@ -11,12 +11,18 @@ extern "C" {
 #include "assist.h"
 }
 
-#define MAX_ANGLE 140
+#define OFFSET 10
+
+#define MAX_ANGLE 144
 #define MIN_ANGLE 90
 #define DELTA_ANGLE 2
 
+#define CALIBRATION_NUM 5
+
 char buf[MAXBUF], msg[MAXBUF];
-int dist[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1];
+int serialfd;
+VL53L0X_Dev_t sensor;
+int dist[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1], base[(MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1];
 
 /*void WaitDataReady(VL53L0X_DEV dev) {
 	uint8_t isready = 0;
@@ -92,54 +98,65 @@ void serialport_write(int fd, int x) {
 	tcflush(fd, TCIOFLUSH);
 }
 
+void measure() {
+	VL53L0X_RangingMeasurementData_t measurementdata;
+
+	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
+		serialport_write(serialfd, angle + OFFSET);
+		usleep(20000);
+
+		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
+
+		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
+
+		if (dist[(angle - MIN_ANGLE) / DELTA_ANGLE] > 2000)
+			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = 2000;
+
+	}
+
+	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
+		serialport_write(serialfd, angle + OFFSET);
+		usleep(20);
+
+	}
+	serialport_write(serialfd, MIN_ANGLE + OFFSET);
+	usleep(300000);
+}
+
 int main() {
+	serialfd = serialport_init("/dev/ttyACM1");
 
-	int serialfd = serialport_init("/dev/ttyACM0");
-
-	VL53L0X_Dev_t sensor;
 	sensor.I2cDevAddr = 0x29;
 	sensor.fd = VL53L0X_i2c_init("/dev/i2c-1", 0x29);
 
 	VL53L0X_DataInit(&sensor);
 	startmeasurement(&sensor);
 
-	VL53L0X_RangingMeasurementData_t measurementdata;
+	memset(base, 0, sizeof(base));
 
-			serialport_write(serialfd, 90);
-			sleep(2);
+	serialport_write(serialfd, MIN_ANGLE + OFFSET);
+	sleep(1);
 
-	for (int iter = 1;iter <= 50;iter++) {
+	for (int iter = 1;iter <= CALIBRATION_NUM;iter++) {
+		measure();
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) base[i] += dist[i];
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", dist[i]);
+		printf("\n");
+	}
+	for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) base[i] /= CALIBRATION_NUM;
+	printf("========================CALIBRATION============================\n");
+	for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) printf("%d ", base[i]);
+	printf("\n===============================================================\n");
 
-		for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
-			serialport_write(serialfd, angle);
-			usleep(2000);
+	for (int iter = 1;;iter++) {
+		measure();
 
-			VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
-
-			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
-
-		}
-		std::stringstream ss1;
-		ss1 << "L";
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss1 << dist[i] << " ";
-		submit("proxy.sock", ss1.str().c_str());
-
-		for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
-			serialport_write(serialfd, angle);
-			usleep(2000);
-
-			VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
-
-			dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
-
-		}
-		std::stringstream ss2;
-		ss2 << "L";
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss2 << dist[i] << " ";
-		submit("proxy.sock", ss2.str().c_str());
+		std::stringstream ss;
+		ss << "L";
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss << dist[i] - base[i] << " ";
+		submit("proxy.sock", ss.str().c_str());
 
 	}
-
 
 	VL53L0X_i2c_close();
 	close(serialfd);

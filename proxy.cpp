@@ -24,11 +24,11 @@ int position_state;
 
 char msg[MAXBUF], response[MAXBUF];
 #define MIN_ANGLE 90
-#define MAX_ANGLE 140
+#define MAX_ANGLE 144
 #define DELTA_ANGLE 2
-#define MIN_STAIRCASE_HEIGHT 120
+#define MIN_STAIRCASE_HEIGHT 50
 #define EPS 10
-#define MIN_FRONT_DISTANCE 90
+#define MIN_FRONT_DISTANCE 60
 #define INF 100000000
 #define ROAD_THRESH_LARGE 20
 #define ROAD_THRESH_SMALL 3
@@ -36,38 +36,36 @@ const double PI = acos(-1.0);
 
 namespace laser {
 
-	double a[MAXBUF], x[MAXBUF];
-	double height;
+	int x[MAXBUF];
+	int height;
 
 	void solve(std::string line) {
 		std::stringstream ss(line);
 		int size = (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1;
 
-		for (int i = 0;i < size;i++) {
+		for (int i = 0;i < size;i++) 
 			ss >> x[i];
-			if (x[i] == -1) x[i] = INF;
-		}
 
+/*		for (int i = 0;i < size;i++) 
+			printf("%f ", acos(x[0] / x[i]) / PI * 180.0);
+		printf("\n");
 		for (int i = 0;i < size;i++) 
-			a[i] = x[i] * cos((double)(DELTA_ANGLE) * i * PI / 180.0);
-
-		for (int i = 0;i < size;i++) 
-			printf("%d ", (int)(round(a[i])));
-		printf("\n");
-		printf("\n");
-		printf("\n");
+			printf("%f ", (x[0] / x[i]));
+		printf("\n");*/
 
 
-		for (int i = 1;i < size;i++)
-			if (abs(a[i] - a[0]) > MIN_STAIRCASE_HEIGHT) {
+		for (int i = 0;i < size;i++)
+			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT) {
 				puts("ALERT!!!");
-				double delta = a[i] - a[0];
-				if (abs(delta - height) < EPS) return;
+				printf("\n");
+
+				double delta = x[i];
+//				if (abs(delta - height) < EPS) return;
 				height = delta;
-				if (height > 0) 
-					sprintf(response, "!前方%.2f米有向下台阶", a[i] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+				if (height < 0) 
+					sprintf(response, "!前方有向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				else
-					sprintf(response, "!前方%.2f米有向上台阶", a[i] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+					sprintf(response, "!前方有向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				submit("speech.sock", response);
 				return;
 			}

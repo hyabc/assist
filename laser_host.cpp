@@ -11,9 +11,9 @@ extern "C" {
 #include "assist.h"
 }
 
-#define OFFSET 10
+#define OFFSET 20
 
-#define MAX_ANGLE 144
+#define MAX_ANGLE 130
 #define MIN_ANGLE 90
 #define DELTA_ANGLE 2
 
@@ -153,7 +153,11 @@ int main() {
 
 		std::stringstream ss;
 		ss << "L";
-		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++) ss << dist[i] - base[i] << " ";
+		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++)
+			if (dist[i] >= 2000)
+				ss << "0 ";
+			else
+				ss << dist[i] - base[i] << " ";
 		submit("proxy.sock", ss.str().c_str());
 
 	}

@@ -18,20 +18,20 @@ extern "C" {
 
 int position_state;
 /* position_state: 0 : on the road,
-					1: approaching roadinter,
+					1: approaching roadinter,		(deleted)
 					2: away from roadinter
 					3: at roadinter*/
 
 char msg[MAXBUF], response[MAXBUF];
 #define MIN_ANGLE 90
-#define MAX_ANGLE 144
+#define MAX_ANGLE 130
 #define DELTA_ANGLE 2
-#define MIN_STAIRCASE_HEIGHT 50
+#define MIN_STAIRCASE_HEIGHT 100
 #define EPS 10
-#define MIN_FRONT_DISTANCE 60
+#define MIN_FRONT_DISTANCE 150
 #define INF 100000000
-#define ROAD_THRESH_LARGE 20
-#define ROAD_THRESH_SMALL 3
+#define ROAD_THRESH_LARGE 50
+#define ROAD_THRESH_SMALL 30
 const double PI = acos(-1.0);
 
 namespace laser {
@@ -94,9 +94,9 @@ namespace ultrasonic {
 
 		if (middle) {
 			if (left && !right)
-				sprintf(response, "!前方有障碍物，向右");
+				sprintf(response, "!前方有障碍物，向右走");
 			else if (right && !left)
-				sprintf(response, "!前方有障碍物，向左");
+				sprintf(response, "!前方有障碍物，向左走");
 			else if (a[0] > a[2]) 
 				sprintf(response, "!前方有障碍物，向左");
 			else
@@ -109,11 +109,11 @@ namespace ultrasonic {
 
 namespace position {
 
-	int heading, road_direction, roadinter_direction;
-	char roadinter_direction_str[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_direction_str[MAXBUF], road_name[MAXBUF];
-	double road_distance, roadinter_distance;
+	double heading, roadinter_direction;
+	char roadinter_direction_str[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_name[MAXBUF];
+	double roadinter_distance;
 
-	int convert1(char* str) {
+	double convert1(char* str) {
 		if (strcmp(str, "北") == 0) return 0;
 		if (strcmp(str, "东北") == 0) return 45;
 		if (strcmp(str, "东") == 0) return 90;
@@ -125,7 +125,7 @@ namespace position {
 //		printf("ALERT: direction=%s\n", str);
 	}
 
-	const char* convert2(int angle) {
+	const char* convert2(double angle) {
 		if (angle < 23) return "北";
 		if (angle < 68) return "东北";
 		if (angle < 113) return "东";
@@ -140,9 +140,8 @@ namespace position {
 	void solve(std::string line) {
 
 		std::stringstream ss(line);
-		ss >> heading >> road_direction_str >> road_distance >> road_name >>
+		ss >> heading >> road_name >>
 			roadinter_direction_str >> roadinter_distance >> roadinter_name1 >> roadinter_name2;
-		road_direction = convert1(road_direction_str);
 		roadinter_direction = convert1(roadinter_direction_str);
 
 		if (roadinter_distance > ROAD_THRESH_LARGE) {
@@ -157,19 +156,19 @@ namespace position {
 			}
 			return;
 		}
-		if (abs(heading - roadinter_direction) < 90 || abs(heading - roadinter_direction) > 270) {
+/*		if (abs(heading - roadinter_direction) < 90 || abs(heading - roadinter_direction) > 270) {
 			if (position_state != 1) {
 				position_state = 1;
 				sprintf(response, " 前方%d米是%s%s路口", (int)(round(roadinter_distance)), roadinter_name1, roadinter_name2);
 				submit("speech.sock", response);
 			}
-		} else {
+		} else {*/
 			if (position_state != 2) {
 				position_state = 2;
-				sprintf(response, " 你所在%s路，方向%s", road_name, convert2(road_direction));
+				sprintf(response, " 你所在%s路", road_name);
 				submit("speech.sock", response);
 			}
-		}
+//		}
 	}
 }
 

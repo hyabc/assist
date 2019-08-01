@@ -1,6 +1,6 @@
 const int trig[3] = {3, 5, 7}, echo[3] = {4, 6, 8};
 int i, j;
-double duration, dist;
+double distance, dist;
 void setup() {
 	Serial.begin(115200);
 	while (!Serial) delay(1);

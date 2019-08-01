@@ -51,7 +51,7 @@ namespace laser {
 
 
 		for (int i = 0;i < SIZE;i++)
-			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT * cos((double)(i * DELTA_ANGLE) * PI / 180.0) {
+			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT * cos((double)(i * DELTA_ANGLE) * PI / 180.0)) {
 				puts("ALERT!!!");
 				printf("\n");
 

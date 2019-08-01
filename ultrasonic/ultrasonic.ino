@@ -11,7 +11,7 @@ void setup() {
 }
 void measure(int x) {
 	distance = 0.0;
-	for (j = 0;j < 10;j++) {
+	for (j = 0;j < 5;j++) {
 		digitalWrite(trig[x], LOW);
 		delayMicroseconds(5);
 		digitalWrite(trig[x], HIGH);
@@ -19,7 +19,7 @@ void measure(int x) {
 		digitalWrite(trig[x], LOW);
 		pinMode(echo[x], INPUT);
 
-		dist = (double)(pulseIn(echo[x], HIGH, 100000)) / 2 / 29.1;
+		dist = (double)(pulseIn(echo[x], HIGH, 10000)) / 2 / 29.1;
 		if (dist > 1.0) 
 			distance += dist;
 		else
@@ -27,13 +27,13 @@ void measure(int x) {
 
 		delayMicroseconds(100);
 	}
-	distance /= 10.0;
+	distance /= 5.0;
 }
 void loop() {
 	Serial.print('U');
 	for (i = 0;i < 3;i++) {
 		measure(i);
-		if (distance > 1.0)
+		if (distance > 1.0 && distance < 10000.0)
 			Serial.print((long)(round(distance)));
 		else 
 			Serial.print(-1);

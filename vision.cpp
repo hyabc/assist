@@ -119,7 +119,7 @@ int main() {
 			}
 		}
 		sprintf(buf, "%d", iter);
-		//save_image(frame, buf);
+		save_image(frame, buf);
 
 		free_detections(dets, count);
 		free_image(frame);

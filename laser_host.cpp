@@ -13,11 +13,6 @@ extern "C" {
 
 #define OFFSET 20
 
-#define MAX_ANGLE 130
-#define MIN_ANGLE 90
-#define DELTA_ANGLE 2
-#define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)
-
 #define CALIBRATION_NUM 5
 
 char buf[MAXBUF], msg[MAXBUF];
@@ -104,7 +99,7 @@ void measure() {
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
-		usleep(20000);
+		usleep(40000);
 
 		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
 
@@ -118,7 +113,8 @@ void measure() {
 
 	}
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-	usleep(300000);
+//	usleep(500000);
+sleep(1);
 }
 
 int main() {
@@ -136,6 +132,7 @@ int main() {
 
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
 	sleep(1);
+	measure();
 
 	for (int iter = 1;iter <= CALIBRATION_NUM || tot < SIZE;iter++) {
 		measure();
@@ -147,7 +144,8 @@ int main() {
 
 				cnt[i]++;
 				base[i] += dist[i];
-			}
+			} else
+				break;
 	}
 	for (int i = 0;i < SIZE;i++) base[i] /= cnt[i];
 	printf("========================CALIBRATION============================\n");
@@ -159,10 +157,12 @@ int main() {
 
 		std::stringstream ss;
 		ss << "L";
+		bool tf = false;
 		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++)
-			if (dist[i] >= 2000)
+			if (dist[i] >= 2000 || tf) {
+				tf = true;
 				ss << "0 ";
-			else
+			} else
 				ss << dist[i] - base[i] << " ";
 		submit("proxy.sock", ss.str().c_str());
 

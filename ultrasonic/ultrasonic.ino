@@ -1,6 +1,6 @@
 const int trig[3] = {3, 5, 7}, echo[3] = {4, 6, 8};
 int i, j;
-double duration, distance;
+double duration, dist;
 void setup() {
 	Serial.begin(115200);
 	while (!Serial) delay(1);
@@ -18,8 +18,13 @@ void measure(int x) {
 		delayMicroseconds(10);
 		digitalWrite(trig[x], LOW);
 		pinMode(echo[x], INPUT);
-		duration = pulseIn(echo[x], HIGH, 100000);
-		distance += (duration / 2) / 29.1;
+
+		dist = (double)(pulseIn(echo[x], HIGH, 100000)) / 2 / 29.1;
+		if (dist > 1.0) 
+			distance += dist;
+		else
+			distance += 1000000;
+
 		delayMicroseconds(100);
 	}
 	distance /= 10.0;

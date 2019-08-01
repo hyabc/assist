@@ -23,12 +23,9 @@ int position_state;
 					3: at roadinter*/
 
 char msg[MAXBUF], response[MAXBUF];
-#define MIN_ANGLE 90
-#define MAX_ANGLE 130
-#define DELTA_ANGLE 2
 #define MIN_STAIRCASE_HEIGHT 100
 #define EPS 10
-#define MIN_FRONT_DISTANCE 150
+#define MIN_FRONT_DISTANCE 100
 #define INF 100000000
 #define ROAD_THRESH_LARGE 50
 #define ROAD_THRESH_SMALL 30
@@ -41,9 +38,8 @@ namespace laser {
 
 	void solve(std::string line) {
 		std::stringstream ss(line);
-		int size = (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1;
 
-		for (int i = 0;i < size;i++) 
+		for (int i = 0;i < SIZE;i++) 
 			ss >> x[i];
 
 /*		for (int i = 0;i < size;i++) 
@@ -54,8 +50,8 @@ namespace laser {
 		printf("\n");*/
 
 
-		for (int i = 0;i < size;i++)
-			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT) {
+		for (int i = 0;i < SIZE;i++)
+			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT * cos((double)(i * DELTA_ANGLE) * PI / 180.0) {
 				puts("ALERT!!!");
 				printf("\n");
 
@@ -63,9 +59,9 @@ namespace laser {
 //				if (abs(delta - height) < EPS) return;
 				height = delta;
 				if (height < 0) 
-					sprintf(response, "!前方有向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+					sprintf(response, "!向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				else
-					sprintf(response, "!前方有向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+					sprintf(response, "!向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				submit("speech.sock", response);
 				return;
 			}
@@ -93,14 +89,15 @@ namespace ultrasonic {
 //		printf("%d %d %d\n", a[0], a[1], a[2]);
 
 		if (middle) {
-			if (left && !right)
-				sprintf(response, "!前方有障碍物，向右走");
-			else if (right && !left)
-				sprintf(response, "!前方有障碍物，向左走");
-			else if (a[0] > a[2]) 
-				sprintf(response, "!前方有障碍物，向左");
-			else
-				sprintf(response, "!前方有障碍物，向右");
+			sprintf(response, "!有障碍");
+			submit("speech.sock", response);
+			return;
+		} else if (left) {
+			sprintf(response, " 左障碍");
+			submit("speech.sock", response);
+			return;
+		} else if (right) {
+			sprintf(response, " 右障碍");
 			submit("speech.sock", response);
 			return;
 		}

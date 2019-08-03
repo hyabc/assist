@@ -23,12 +23,7 @@ int position_state;
 					3: at roadinter*/
 
 char msg[MAXBUF], response[MAXBUF];
-#define MIN_STAIRCASE_HEIGHT 100
-#define EPS 10
-#define MIN_FRONT_DISTANCE 100
-#define INF 100000000
-#define ROAD_THRESH_LARGE 50
-#define ROAD_THRESH_SMALL 30
+
 const double PI = acos(-1.0);
 
 namespace laser {
@@ -51,7 +46,7 @@ namespace laser {
 
 
 		for (int i = 0;i < SIZE;i++)
-			if (abs(x[i]) > MIN_STAIRCASE_HEIGHT * cos((double)(i * DELTA_ANGLE) * PI / 180.0)) {
+			if (abs(x[i]) * cos((double)(i * DELTA_ANGLE + OFFSET) * PI / 180.0) > MIN_STAIRCASE_HEIGHT) {
 				puts("ALERT!!!");
 				printf("\n");
 
@@ -72,9 +67,15 @@ namespace ultrasonic {
 
 	int a[3];
 	bool left, middle, right;
+	int state; /* 0: 没有
+		1:左
+		2：中
+		3：右
+	*/
+
 	void solve(std::string line) {
 
-		if (position_state == 3) return;
+//		if (position_state == 3) return;
 
 		std::stringstream ss(line);
 		for (int i = 0;i < 3;i++) {
@@ -85,21 +86,31 @@ namespace ultrasonic {
 		left = (a[0] < MIN_FRONT_DISTANCE);
 		middle = (a[1] < MIN_FRONT_DISTANCE);
 		right = (a[2] < MIN_FRONT_DISTANCE);
-		bool left = a[0] < MIN_FRONT_DISTANCE, middle = a[1] < MIN_FRONT_DISTANCE, right = a[2] < MIN_FRONT_DISTANCE;
-//		printf("%d %d %d\n", a[0], a[1], a[2]);
+		bool left = a[0] < MIN_SIDE_DISTANCE, middle = a[1] < MIN_FRONT_DISTANCE, right = a[2] < MIN_SIDE_DISTANCE;
+		printf("ULTRASONIC%d %d %d, status = %d %d %d\n", a[0], a[1], a[2], left?1:0, middle?1:0, right?1:0);
 
 		if (middle) {
-			sprintf(response, "!有障碍");
-			submit("speech.sock", response);
-			return;
+			printf("CURRENT STATE: %d\n", state);
+			if (state != 2) {
+				state = 2;
+				printf("ULTRASONIC SPEAK\n");
+				sprintf(response, "1有障碍");
+				submit("speech.sock", response);
+			}
 		} else if (left) {
-			sprintf(response, " 左障碍");
-			submit("speech.sock", response);
-			return;
+			if (state != 1) {
+				state = 1;
+				sprintf(response, "1左障碍");
+				submit("speech.sock", response);
+			}
 		} else if (right) {
-			sprintf(response, " 右障碍");
-			submit("speech.sock", response);
-			return;
+			if (state != 3) {
+				state = 3;
+				sprintf(response, "1右障碍");
+				submit("speech.sock", response);
+			}
+		} else {
+			state = 0;
 		}
 	}
 }
@@ -146,9 +157,10 @@ namespace position {
 			return;
 		}
 		if (roadinter_distance < ROAD_THRESH_SMALL) {
+			puts("position state 3");
 			if (position_state != 3) {
 				position_state = 3;
-				sprintf(response, "!你在%s%s路口", roadinter_name1, roadinter_name2);
+				sprintf(response, "2你在%s%s路口", roadinter_name1, roadinter_name2);
 				submit("speech.sock", response);
 			}
 			return;
@@ -160,9 +172,10 @@ namespace position {
 				submit("speech.sock", response);
 			}
 		} else {*/
+			puts("position state 2");
 			if (position_state != 2) {
 				position_state = 2;
-				sprintf(response, " 你所在%s路", road_name);
+				sprintf(response, "2你所在%s", road_name);
 				submit("speech.sock", response);
 			}
 //		}
@@ -178,7 +191,7 @@ namespace monitor {
 		ss >> volt;
 
 		if (volt < 10500) {
-			sprintf(response, " 电池电量低");
+			sprintf(response, "3电池电量低");
 			submit("speech.sock", response);
 		} else if (volt < 10000) {
 			sync();
@@ -203,20 +216,20 @@ namespace vision {
 
 		if (cur == -1) return;
 
-		if (cur != status) {
+//		if (cur != status) {
 			if (cur == 0) {
-				if (status != 1) {
-					sprintf(response, "!红灯");
+//				if (status != 1) {
+					sprintf(response, "4红灯");
 					submit("speech.sock", response);
-				}
+//				}
 			}
 			if (cur == 1) {
-				sprintf(response, "!绿灯");
+				sprintf(response, "4绿灯");
 				submit("speech.sock", response);
 			}
 			status = cur;
 		}
-	}
+//	}
 }
 
 int main() {
@@ -233,6 +246,7 @@ int main() {
 
 	laser::height = 0;
 	position_state = 0;
+	ultrasonic::state = 0;
 
 	while (1) {
 		struct sockaddr_un new_addr;

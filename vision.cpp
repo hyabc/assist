@@ -44,7 +44,7 @@ namespace traffic_light {
 
 		cv::Rect rcur = cv::boundingRect(cv::Mat(contours[cur]));
 		double x = (double)(rcur.height) / rcur.width;
-		if (x < 1.5) return;
+		if (x < TRAFFIC_THRESH) return;
 		if (cur_option == -1 || cv::contourArea(contours[cur]) > area) {
 			area = cv::contourArea(contours[cur]);
 			cur_option = option;
@@ -73,6 +73,7 @@ int main() {
 		for (int t = 1;t <= 10;t++) 
 			cap >> f;
 //		f = cv::imread("a.jpg");
+
 		image frame = mat_to_image(f);
 		image sized = letterbox_image(frame, net->w, net->h);
 
@@ -119,7 +120,7 @@ int main() {
 			}
 		}
 		sprintf(buf, "%d", iter);
-		save_image(frame, buf);
+		//save_image(frame, buf);
 
 		free_detections(dets, count);
 		free_image(frame);

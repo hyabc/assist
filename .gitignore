@@ -21,6 +21,7 @@ yolov3.cfg
 yolov3-tiny.weights
 yolov3-tiny.cfg
 data/
+prevoice/
 vision
 *.mp3
 speech

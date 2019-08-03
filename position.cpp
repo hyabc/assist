@@ -41,8 +41,10 @@ int main() {
 
 	int sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	while (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		close(sockfd);
 		puts("BIND FAILED");
 		sleep(1);
+		sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	}
 	listen(sockfd, 10);
 

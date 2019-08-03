@@ -11,10 +11,6 @@ extern "C" {
 #include "assist.h"
 }
 
-#define OFFSET 20
-
-#define CALIBRATION_NUM 5
-
 char buf[MAXBUF], msg[MAXBUF];
 int serialfd;
 VL53L0X_Dev_t sensor;
@@ -107,7 +103,7 @@ void measure() {
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
-		usleep(40000);
+		usleep(20000);
 
 		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
 
@@ -121,8 +117,7 @@ void measure() {
 
 	}
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-//	usleep(500000);
-sleep(1);
+	usleep(200000);
 }
 
 int main() {
@@ -142,7 +137,7 @@ int main() {
 	sleep(1);
 	measure();
 
-	for (int iter = 1;iter <= CALIBRATION_NUM || tot < SIZE;iter++) {
+	for (int iter = 1;iter <= LASER_CALIBRATION_NUM || tot < SIZE;iter++) {
 		measure();
 		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
 		printf("\n");
@@ -162,6 +157,8 @@ int main() {
 
 	for (int iter = 1;;iter++) {
 		measure();
+		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
+		printf("\n");
 
 		std::stringstream ss;
 		ss << "L";

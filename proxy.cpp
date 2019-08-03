@@ -54,9 +54,9 @@ namespace laser {
 //				if (abs(delta - height) < EPS) return;
 				height = delta;
 				if (height < 0) 
-					sprintf(response, "!向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+					sprintf(response, "5向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				else
-					sprintf(response, "!向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
+					sprintf(response, "5向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
 				submit("speech.sock", response);
 				return;
 			}

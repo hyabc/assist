@@ -26,6 +26,8 @@
 #define MAX_Q1_SIZE 3
 #define MAX_Q2_SIZE 3
 
+#define MAX_SPEECH_TYPE 10
+
 void submit(const char*, const char*);
 
 #endif

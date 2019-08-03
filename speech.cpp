@@ -21,12 +21,11 @@
 #include "jsoncpp/json/json.h"
 using namespace std;
 
-bool type_exist[10];
+bool type_exist[MAX_SPEECH_TYPE];
 
 char msg[MAXBUF];
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER, mutex2 = PTHREAD_MUTEX_INITIALIZER, mutex3 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER, mutex2 = PTHREAD_MUTEX_INITIALIZER;//, mutex3 = PTHREAD_MUTEX_INITIALIZER;
 sem_t sem1, sem2;
-int playPID;
 struct node {
 	char name[50];
 	string content;
@@ -46,6 +45,10 @@ struct node {
 			strcat(name, "red");
 		else if (content.compare("绿灯") == 0)
 			strcat(name, "green");
+		else if (content.compare("向上台阶") == 0)
+			strcat(name, "up");
+		else if (content.compare("向下台阶") == 0)
+			strcat(name, "down");
 		else {
 			char buf[50];
 			uuid_t uuid;
@@ -178,22 +181,24 @@ void* thread_func2(void* arg) {
 			int PID = fork();
 			if (!PID) {
 				execlp("play", "play", x->name, NULL);
-			} else /*if (!x->important)*/ {
-				pthread_mutex_lock(&mutex3);
+			} else {
+				/*pthread_mutex_lock(&mutex3);
 				playPID = PID;
-				pthread_mutex_unlock(&mutex3);
+				pthread_mutex_unlock(&mutex3);*/
 			}
 			wait(0);
-			type_exist[x->type] = false;
-			//unlink(x->name);
+
+			if (!x->exist)
+				unlink(x->name);
+
 			delete x;
+			type_exist[x->type] = false;
 		}
 	}
 }
 int main() {
 	memset(type_exist, false, sizeof(type_exist));
 
-	playPID = -1;
 	sem_init(&sem1, 0, 0);
 	sem_init(&sem2, 0, 0);
     curl_global_init(CURL_GLOBAL_ALL);

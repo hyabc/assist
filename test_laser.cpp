@@ -15,6 +15,7 @@ char buf[MAXBUF], msg[MAXBUF];
 int serialfd;
 VL53L0X_Dev_t sensor;
 int dist[SIZE], base[SIZE], cnt[SIZE], tot;
+char st[MAXBUF];
 
 /*void WaitDataReady(VL53L0X_DEV dev) {
 	uint8_t isready = 0;
@@ -155,13 +156,18 @@ int main() {
 	for (int i = 0;i < SIZE;i++) printf("%d ", base[i]);
 	printf("\n===============================================================\n");
 
+
+	FILE* value1 = fopen("value1", "w");
+
 	for (int iter = 1;;iter++) {
+		gets(st);
+		if (strcmp(st, "end") == 0) break;
+
 		measure();
 		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
 		printf("\n");
 
 		std::stringstream ss;
-		ss << "L";
 		bool tf = false;
 		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++)
 			if (dist[i] >= 2000 || tf) {
@@ -169,12 +175,12 @@ int main() {
 				ss << "0 ";
 			} else
 				ss << dist[i] - base[i] << " ";
-		submit("proxy.sock", ss.str().c_str());
-
+		fprintf(value1, "%s\n", ss.str().c_str());
 	}
 
 	VL53L0X_i2c_close();
 	close(serialfd);
+	fclose(value1);
 	return 0;
 }
 

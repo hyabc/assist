@@ -191,8 +191,8 @@ void* thread_func2(void* arg) {
 			if (!x->exist)
 				unlink(x->name);
 
-			delete x;
 			type_exist[x->type] = false;
+			delete x;
 		}
 	}
 }

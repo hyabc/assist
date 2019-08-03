@@ -157,7 +157,7 @@ int main() {
 	printf("\n===============================================================\n");
 
 
-	FILE* value1 = fopen("value1", "w");
+	FILE* value1 = fopen("value3", "a");
 
 	for (int iter = 1;;iter++) {
 		gets(st);

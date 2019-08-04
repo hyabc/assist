@@ -55,7 +55,7 @@ void printtime() {
 void init() {
 	memset(first, 0, sizeof(first));
 		
-	dataset_input_size = 26;
+	dataset_input_size = SIZE;
 	dataset_output_size = 3;
 	train_count = 200, test_count = 101;
 

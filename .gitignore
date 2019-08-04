@@ -34,10 +34,11 @@ run
 value1
 value2
 value3
-test
+lasertest
 value4
 test-data
 train-data
 weights
 deep
 judge
+gen

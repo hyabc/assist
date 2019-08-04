@@ -66,7 +66,7 @@ int main() {
 	fclose(f);
 
 	edge = 0;
-	dataset_input_size = 26;
+	dataset_input_size = SIZE;
 	dataset_output_size = 3;
 
 	sum[0] = 0;

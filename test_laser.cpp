@@ -57,9 +57,9 @@ void startmeasurement(VL53L0X_Dev_t *devptr) {
 	VL53L0X_SetLimitCheckEnable(devptr, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
 	VL53L0X_SetLimitCheckValue(devptr, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.1*65536));
 	VL53L0X_SetLimitCheckValue(devptr, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(60*65536));
-	VL53L0X_SetMeasurementTimingBudgetMicroSeconds(devptr, 33000);
 	VL53L0X_SetVcselPulsePeriod(devptr, VL53L0X_VCSEL_PERIOD_PRE_RANGE, 18);
 	VL53L0X_SetVcselPulsePeriod(devptr, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, 14);
+	VL53L0X_SetMeasurementTimingBudgetMicroSeconds(devptr, 50000);
 }
 
 int serialport_init(const char* serialport) {
@@ -104,6 +104,7 @@ void measure() {
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
+		//serialport_write(serialfd, 130);
 		usleep(20000);
 
 		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
@@ -114,11 +115,12 @@ void measure() {
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
+		//serialport_write(serialfd, 130);
 		usleep(20);
 
 	}
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-	usleep(200000);
+	usleep(300000);
 }
 
 int main() {
@@ -157,15 +159,15 @@ int main() {
 	printf("\n===============================================================\n");
 
 
-	FILE* value1 = fopen("value3", "a");
+	FILE* value1 = fopen("value4", "a");
 
 	for (int iter = 1;;iter++) {
 		gets(st);
 		if (strcmp(st, "end") == 0) break;
 
 		measure();
-		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
-		printf("\n");
+		//for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
+		//printf("\n");
 
 		std::stringstream ss;
 		bool tf = false;
@@ -176,6 +178,7 @@ int main() {
 			} else
 				ss << dist[i] - base[i] << " ";
 		fprintf(value1, "%s\n", ss.str().c_str());
+		printf("%s\n", ss.str().c_str());
 	}
 
 	VL53L0X_i2c_close();

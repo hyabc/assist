@@ -2,13 +2,13 @@
 #define __ASSIST_H__
 
 #define MIN_ANGLE 90
-#define MAX_ANGLE 150
+#define MAX_ANGLE 140
 #define DELTA_ANGLE 2
 #define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)
 
 #define MAXBUF 1000
 
-#define OFFSET 20
+#define OFFSET 30
 
 #define MIN_STAIRCASE_HEIGHT 100
 

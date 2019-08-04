@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "assist.h"
+#include "nn.h"
+
 const double PI = acos(-1.0);
 int hidden_node, input_node, output_node, total_node, train_count, test_count, input_begin, input_end, hidden_begin, hidden_end, output_begin, output_end, dataset_type, dataset_input_size, dataset_output_size;
 int sum[100];
@@ -56,7 +58,8 @@ void addedge(int u, int v, double weight) {
 	if (succ[edge]) prev[succ[edge]] = edge;
 	first[u] = edge;
 }
-int main() {
+
+void nn_init() {
 	FILE* f = fopen("weights", "rb");
 	fread(first, sizeof(int), TOTAL_MAX, f);
 	fread(succ, sizeof(int), TOTAL_MAX_EDGE, f);
@@ -73,21 +76,15 @@ int main() {
 	for (int i = 1;i <= num;i++) sum[i] = sum[i - 1] + layer_nodes[i];
 
 	calc();
-	
-	while (1) {
-		for (int i = 1;i < input_end;i++) {
-			int t;scanf("%d", &t);
-			out[i] = t;
-		}
-		out[input_end] = 1.0;
-					
-		forward();
+}
 
-		double *p = arrmax(out + output_begin, out + output_end + 1);
-		int ans = (p - (out + output_begin)) + 1;
-		printf("%d\n", ans);
-	}
-	
+int nn_predict(int* arr) {
+	for (int i = 1;i < input_end;i++) 
+		out[i] = arr[i];
+	out[input_end] = 1.0;
+				
+	forward();
 
-	return 0;
+	double *p = arrmax(out + output_begin, out + output_end + 1);
+	return (p - (out + output_begin)) + 1;
 }

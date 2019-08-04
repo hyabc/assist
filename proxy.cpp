@@ -12,6 +12,7 @@
 #include <string.h>
 extern "C" {
 #include "assist.h"
+#include "nn.h"
 }
 
 #define abs(x) ({(x) > 0 ? (x) : -(x);})
@@ -28,8 +29,7 @@ const double PI = acos(-1.0);
 
 namespace laser {
 
-	int x[MAXBUF];
-	int height;
+	int x[SIZE];
 
 	void solve(std::string line) {
 		std::stringstream ss(line);
@@ -44,22 +44,14 @@ namespace laser {
 			printf("%f ", (x[0] / x[i]));
 		printf("\n");*/
 
-
-		for (int i = 0;i < SIZE;i++)
-			if (abs(x[i]) * cos((double)(i * DELTA_ANGLE + OFFSET) * PI / 180.0) > MIN_STAIRCASE_HEIGHT) {
-				puts("ALERT!!!");
-				printf("\n");
-
-				double delta = x[i];
-//				if (abs(delta - height) < EPS) return;
-				height = delta;
-				if (height < 0) 
-					sprintf(response, "5向上台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
-				else
-					sprintf(response, "5向下台阶");//, 0.001 * a[0] * tan((double)(DELTA_ANGLE) * i * PI / 180.0));
-				submit("speech.sock", response);
-				return;
-			}
+		int cur = nn_predict(x);
+		if (cur == 2) {
+			sprintf(response, "5向上台阶");
+			submit("speech.sock", response);
+		} else if (cur == 3) {
+			sprintf(response, "5向下台阶");
+			submit("speech.sock", response);
+		}
 	}
 }
 
@@ -233,6 +225,8 @@ namespace vision {
 }
 
 int main() {
+	nn_init();
+
 	unlink("proxy.sock");
 
 	struct sockaddr_un addr;
@@ -244,7 +238,6 @@ int main() {
 	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	listen(sockfd, 10);
 
-	laser::height = 0;
 	position_state = 0;
 	ultrasonic::state = 0;
 

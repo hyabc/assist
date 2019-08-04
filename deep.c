@@ -228,7 +228,7 @@ int main() {
 	fclose(f);
 
 
-	while (1) {
+	/*while (1) {
 		for (int i = 1;i < input_end;i++) {
 			int t;scanf("%d", &t);
 			out[i] = t;
@@ -240,7 +240,7 @@ int main() {
 		double *p = arrmax(out + output_begin, out + output_end + 1);
 		int ans = (p - (out + output_begin)) + 1;
 		printf("%d\n", ans);
-	}
+	}*/
 	
 
 	return 0;

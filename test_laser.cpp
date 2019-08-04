@@ -104,7 +104,6 @@ void measure() {
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
-		//serialport_write(serialfd, 130);
 		usleep(20000);
 
 		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
@@ -115,7 +114,6 @@ void measure() {
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
-		//serialport_write(serialfd, 130);
 		usleep(20);
 
 	}

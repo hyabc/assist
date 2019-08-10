@@ -152,7 +152,13 @@ void* thread_func1(void* arg) {
 				if (playPID != -1) kill(playPID, SIGKILL);
 				pthread_mutex_unlock(&mutex3);
 			}*/
-			while (q2.size() > MAX_Q2_SIZE) q2.pop();
+			while (q2.size() > MAX_Q2_SIZE) {
+				type_exist[q2.front().type] = false;
+				if (!q2.front().exist)
+					unlink(q2.front().name);
+
+				q2.pop();
+			}
 			q2.push(*x);
 			pthread_mutex_unlock(&mutex2);
 
@@ -235,7 +241,10 @@ int main() {
 
 		pthread_mutex_lock(&mutex1);
 //		if (x.important) {while (q1.size()) q1.pop();}
-		while (q1.size() > MAX_Q1_SIZE) q1.pop();
+		while (q1.size() > MAX_Q1_SIZE) {
+			type_exist[q1.front().type] = false;
+			q1.pop();
+		}
 		q1.push(x);
 		pthread_mutex_unlock(&mutex1);
 

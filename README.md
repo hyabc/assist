@@ -21,5 +21,7 @@ make
 # Exec
 
 ```
-./assist
+./spawn
 ```
+
+TODO: add bicycle/motorcycle when !roadinter.

@@ -107,11 +107,11 @@ namespace ultrasonic {
 
 namespace position {
 
-	double heading, roadinter_direction;
-	char roadinter_direction_str[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], road_name[MAXBUF];
-	double roadinter_distance;
+//	double heading, roadinter_direction;
+	char /*roadinter_direction_str[MAXBUF],*/ roadinter_name[MAXBUF], road_name[MAXBUF];
+	int roadinter_distance;
 
-	double convert1(char* str) {
+	/*double convert1(char* str) {
 		if (strcmp(str, "北") == 0) return 0;
 		if (strcmp(str, "东北") == 0) return 45;
 		if (strcmp(str, "东") == 0) return 90;
@@ -133,14 +133,12 @@ namespace position {
 		if (angle < 293) return "西";
 		if (angle < 338) return "西北";
 		return "北";
-	}
+	}*/
 
 	void solve(std::string line) {
 
 		std::stringstream ss(line);
-		ss >> heading >> road_name >>
-			roadinter_direction_str >> roadinter_distance >> roadinter_name1 >> roadinter_name2;
-		roadinter_direction = convert1(roadinter_direction_str);
+		ss >> road_name >> roadinter_distance;
 
 		if (roadinter_distance > ROAD_THRESH_LARGE) {
 			position_state = 0;
@@ -150,7 +148,8 @@ namespace position {
 			puts("position state 3");
 			if (position_state != 3) {
 				position_state = 3;
-				sprintf(response, "2你在%s%s路口", roadinter_name1, roadinter_name2);
+				ss >> roadinter_name;
+				sprintf(response, "2你在%s", roadinter_name);
 				submit("speech.sock", response);
 			}
 			return;

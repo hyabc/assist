@@ -18,9 +18,10 @@ extern "C" {
 }
 struct String {char* str;size_t size;} result;
 std::map<std::string, clock_t> last;
-char revGeoRequest[MAXBUF], response[MAXBUF], roadinter_direction[MAXBUF], roadinter_distance[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], 
-	msg[MAXBUF], coordinates[MAXBUF], heading[MAXBUF], road_name[MAXBUF], 
-	poi_id[MAXBUF], poi_name[MAXBUF], poi_distance[MAXBUF];
+bool exist_roadinter;
+char revGeoRequest[MAXBUF], response[MAXBUF], roadinter_distance[MAXBUF], roadinter_name[MAXBUF], 
+	msg[MAXBUF], coordinates[MAXBUF], road_name[MAXBUF], 
+	poi_id[MAXBUF], poi_name[MAXBUF], poi_distance[MAXBUF], poi_type[MAXBUF];
 
 
 size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer) {
@@ -44,7 +45,7 @@ void revgeo_solve(const String& result) {
 					xmlNodePtr cur2 = cur1->xmlChildrenNode;
 					while (cur2) {
 
-						if (!xmlStrcmp(cur2->name, (const xmlChar *)"roadinters")) {
+						/*if (!xmlStrcmp(cur2->name, (const xmlChar *)"roadinters")) {
 							xmlNodePtr cur3 = cur2->xmlChildrenNode;
 							while (cur3) {
 								if (!xmlStrcmp(cur3->name, (const xmlChar *)"roadinter")) {
@@ -68,7 +69,7 @@ void revgeo_solve(const String& result) {
 								}
 								cur3 = cur3->next;
 							}
-						}
+						}*/
 
 						if (!xmlStrcmp(cur2->name, (const xmlChar *)"roads")) {
 							xmlNodePtr cur3 = cur2->xmlChildrenNode;
@@ -127,14 +128,30 @@ void poi_solve(const String& result) {
 								if (!xmlStrcmp(cur3->name, (const xmlChar *)"name")) 
 									strcpy(poi_name, (const char*)cur3->children->content);
 
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"typecode")) 
+									strcpy(poi_type, (const char*)cur3->children->content);
+
 								cur3 = cur3->next;
 							}
-							std::string curID(poi_id);
-							if (last.count(curID) == 0 || (double)(clock() - last[curID]) / CLOCKS_PER_SEC > POI_SAME_WAIT_SEC) {
-								last[curID] = clock();
-								sprintf(response, "0距离%s米有%s", poi_distance, poi_name);
-								printf("SUBMIT: %s\n", response);
-								submit("speech.sock", response);
+							
+							if (strcmp(poi_type, "190302") == 0) {
+								if (!exist_roadinter) {
+									exist_roadinter = true;
+									strcpy(roadinter_distance, poi_distance);
+									strcpy(roadinter_name, poi_name);
+								}
+							} else {
+								int dist;
+								sscanf(poi_distance, "%d", &dist);
+								if (dist < POI_RADIUS) {
+									std::string curID(poi_id);
+									if (last.count(curID) == 0 || (double)(clock() - last[curID]) / CLOCKS_PER_SEC > POI_SAME_WAIT_SEC) {
+										last[curID] = clock();
+										sprintf(response, "0距离%s米有%s", poi_distance, poi_name);
+										printf("SUBMIT: %s\n", response);
+										submit("speech.sock", response);
+									}
+								}
 							}
 						}
 
@@ -168,6 +185,10 @@ int main() {
 	listen(sockfd, 10);
 
 	while (1) {
+		exist_roadinter = false;
+		road_name[0] = 0;
+		roadinter_distance[0] = 0;
+		roadinter_name[0] = 0;
 
 		struct sockaddr_un new_addr;
 		socklen_t new_addr_size = sizeof(new_addr);
@@ -178,7 +199,7 @@ int main() {
 		std::string line(msg, len);
 		std::stringstream ss(line);
 
-		ss >> coordinates >> heading;
+		ss >> coordinates;
 
 		//逆地址编码API
 		result.str = (char*)malloc(1);
@@ -201,7 +222,7 @@ int main() {
 		result.str = (char*)malloc(1);
 		result.size = 0;
 		curl = curl_easy_init();
-		sprintf(revGeoRequest, "https://restapi.amap.com/v3/place/around?output=xml&location=%s&key=%s&extensions=all&types=%s&radius=%d&sortrule=distance", coordinates, getenv("amapkey"), POI_TYPE, POI_RADIUS);
+		sprintf(revGeoRequest, "https://restapi.amap.com/v3/place/around?output=xml&location=%s&key=%s&extensions=all&types=%s&radius=%d&sortrule=distance", coordinates, getenv("amapkey"), POI_TYPE, POI_SEARCH_RADIUS);
 		curl_easy_setopt(curl, CURLOPT_URL, revGeoRequest);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeToString);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&result);
@@ -214,10 +235,12 @@ int main() {
 		free(result.str);
 
 
-
-		sprintf(response, "P%s %s %s %s %s %s", heading, road_name, roadinter_direction, roadinter_distance, roadinter_name1, roadinter_name2);
+		if (exist_roadinter)
+			sprintf(response, "P%s %s %s", road_name, roadinter_distance, roadinter_name);
+		else 
+			sprintf(response, "P%s %d", road_name, INF);
+			
 		submit("proxy.sock", response);
-	printf("%s\n", response);
 
 	}
 

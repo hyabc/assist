@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <time.h>
+#include <map>
 #include <arpa/inet.h>
 #include <string>
 #include <sstream>
@@ -14,12 +16,16 @@
 extern "C" {
 #include "assist.h"
 }
-struct string {char* str;size_t size;};
-struct string result;
+struct String {char* str;size_t size;} result;
+std::map<std::string, clock_t> last;
+char revGeoRequest[MAXBUF], response[MAXBUF], roadinter_direction[MAXBUF], roadinter_distance[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], 
+	msg[MAXBUF], coordinates[MAXBUF], heading[MAXBUF], road_name[MAXBUF], 
+	poi_id[MAXBUF], poi_name[MAXBUF], poi_distance[MAXBUF];
+
 
 size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer) {
 	size_t realsize = size * nmemb;
-	struct string *mem = (struct string*)(pointer);
+	String *mem = (String*)(pointer);
 	mem->str = (char*)realloc(mem->str, mem->size + realsize + 1);
 	memcpy(&(mem->str[mem->size]), content, realsize);
 	mem->size += realsize;
@@ -27,8 +33,121 @@ size_t writeToString(void* content, size_t size, size_t nmemb, void *pointer) {
 	return realsize;
 }
 
-char revGeoRequest[MAXBUF], response[MAXBUF], roadinter_direction[MAXBUF], roadinter_distance[MAXBUF], roadinter_name1[MAXBUF], roadinter_name2[MAXBUF], 
-msg[MAXBUF], coordinates[MAXBUF], heading[MAXBUF], road_name[MAXBUF];
+void revgeo_solve(const String& result) {
+	xmlDocPtr doc = xmlParseMemory(result.str, result.size);
+	xmlNodePtr cur = xmlDocGetRootElement(doc);
+	while (cur) {
+		if (!xmlStrcmp(cur->name, (const xmlChar *)"response")) {
+			xmlNodePtr cur1 = cur->xmlChildrenNode;
+			while (cur1) {
+				if (!xmlStrcmp(cur1->name, (const xmlChar *)"regeocode")) {
+					xmlNodePtr cur2 = cur1->xmlChildrenNode;
+					while (cur2) {
+
+						if (!xmlStrcmp(cur2->name, (const xmlChar *)"roadinters")) {
+							xmlNodePtr cur3 = cur2->xmlChildrenNode;
+							while (cur3) {
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"roadinter")) {
+									xmlNodePtr cur4 = cur3->xmlChildrenNode;
+									while (cur4) {
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) 
+											strcpy(roadinter_direction, (const char*)cur4->children->content);
+
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) 
+											strcpy(roadinter_distance, (const char*)cur4->children->content);
+
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) 
+											strcpy(roadinter_name1, (const char*)cur4->children->content);
+
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) 
+											strcpy(roadinter_name2, (const char*)cur4->children->content);
+
+										cur4 = cur4->next;
+									}
+									break;
+								}
+								cur3 = cur3->next;
+							}
+						}
+
+						if (!xmlStrcmp(cur2->name, (const xmlChar *)"roads")) {
+							xmlNodePtr cur3 = cur2->xmlChildrenNode;
+							while (cur3) {
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"road")) {
+									xmlNodePtr cur4 = cur3->xmlChildrenNode;
+									while (cur4) {
+/*										if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction"))
+											strcpy(road_direction, cur4->children->content);
+
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance"))
+											strcpy(road_distance, cur4->children->content);*/
+
+										if (!xmlStrcmp(cur4->name, (const xmlChar *)"name"))
+											strcpy(road_name, (const char*)cur4->children->content);
+
+										cur4 = cur4->next;
+									}
+									break;
+								}
+								cur3 = cur3->next;
+							}
+						}
+
+						cur2 = cur2->next;
+					}
+				}
+				cur1 = cur1->next;
+			}
+		}
+		cur = cur->next;
+	}
+	xmlFreeDoc(doc);
+}
+
+void poi_solve(const String& result) {
+	xmlDocPtr doc = xmlParseMemory(result.str, result.size);
+	xmlNodePtr cur = xmlDocGetRootElement(doc);
+	while (cur) {
+		if (!xmlStrcmp(cur->name, (const xmlChar *)"response")) {
+			xmlNodePtr cur1 = cur->xmlChildrenNode;
+			while (cur1) {
+				if (!xmlStrcmp(cur1->name, (const xmlChar *)"pois")) {
+					xmlNodePtr cur2 = cur1->xmlChildrenNode;
+					while (cur2) {
+
+						if (!xmlStrcmp(cur2->name, (const xmlChar *)"poi")) {
+							xmlNodePtr cur3 = cur2->xmlChildrenNode;
+							while (cur3) {
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"id")) 
+									strcpy(poi_id, (const char*)cur3->children->content);
+
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"distance")) 
+									strcpy(poi_distance, (const char*)cur3->children->content);
+
+								if (!xmlStrcmp(cur3->name, (const xmlChar *)"name")) 
+									strcpy(poi_name, (const char*)cur3->children->content);
+
+								cur3 = cur3->next;
+							}
+							std::string curID(poi_id);
+							if (last.count(curID) == 0 || (double)(clock() - last[curID]) / CLOCKS_PER_SEC > POI_SAME_WAIT_SEC) {
+								last[curID] = clock();
+								sprintf(response, "0距离%s米有%s", poi_distance, poi_name);
+								printf("SUBMIT: %s\n", response);
+								submit("speech.sock", response);
+							}
+						}
+
+						cur2 = cur2->next;
+					}
+				}
+				cur1 = cur1->next;
+			}
+		}
+		cur = cur->next;
+	}
+	xmlFreeDoc(doc);
+}
 
 int main() {
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -59,11 +178,11 @@ int main() {
 		std::string line(msg, len);
 		std::stringstream ss(line);
 
-		ss >> coordinates >> heading >> road_name;
+		ss >> coordinates >> heading;
 
+		//逆地址编码API
 		result.str = (char*)malloc(1);
 		result.size = 0;
-
 		CURL *curl = curl_easy_init();
 		sprintf(revGeoRequest, "https://restapi.amap.com/v3/geocode/regeo?output=xml&location=%s&key=%s&extensions=all", coordinates, getenv("amapkey"));
 		curl_easy_setopt(curl, CURLOPT_URL, revGeoRequest);
@@ -71,80 +190,30 @@ int main() {
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&result);
 		curl_easy_perform(curl);
 
-//					printf("%s  \n", result.str);
-		xmlDocPtr doc = xmlParseMemory(result.str, result.size);
-		xmlNodePtr cur = xmlDocGetRootElement(doc);
-		while (cur) {
-			if (!xmlStrcmp(cur->name, (const xmlChar *)"response")) {
-				xmlNodePtr cur1 = cur->xmlChildrenNode;
-				while (cur1) {
-					if (!xmlStrcmp(cur1->name, (const xmlChar *)"regeocode")) {
-						xmlNodePtr cur2 = cur1->xmlChildrenNode;
-						while (cur2) {
-
-							if (!xmlStrcmp(cur2->name, (const xmlChar *)"roadinters")) {
-								xmlNodePtr cur3 = cur2->xmlChildrenNode;
-								while (cur3) {
-									if (!xmlStrcmp(cur3->name, (const xmlChar *)"roadinter")) {
-										xmlNodePtr cur4 = cur3->xmlChildrenNode;
-										while (cur4) {
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction")) 
-												strcpy(roadinter_direction, (const char*)cur4->children->content);
-
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance")) 
-												strcpy(roadinter_distance, (const char*)cur4->children->content);
-
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"first_name")) 
-												strcpy(roadinter_name1, (const char*)cur4->children->content);
-
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"second_name")) 
-												strcpy(roadinter_name2, (const char*)cur4->children->content);
-
-											cur4 = cur4->next;
-										}
-										break;
-									}
-									cur3 = cur3->next;
-								}
-							}
-/*
-							if (!xmlStrcmp(cur2->name, (const xmlChar *)"roads")) {
-								xmlNodePtr cur3 = cur2->xmlChildrenNode;
-								while (cur3) {
-									if (!xmlStrcmp(cur3->name, (const xmlChar *)"road")) {
-										xmlNodePtr cur4 = cur3->xmlChildrenNode;
-										while (cur4) {
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"direction"))
-												strcpy(road_direction, cur4->children->content);
-
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"distance"))
-												strcpy(road_distance, cur4->children->content);
-
-											if (!xmlStrcmp(cur4->name, (const xmlChar *)"name"))
-												strcpy(road_name, cur4->children->content);
-
-											cur4 = cur4->next;
-										}
-										break;
-									}
-									cur3 = cur3->next;
-								}
-							} */
-
-							cur2 = cur2->next;
-						}
-					}
-					cur1 = cur1->next;
-				}
-			}
-			cur = cur->next;
-		}
+		//printf("%s  \n", result.str);
+		revgeo_solve(result);
+		
 		curl_easy_cleanup(curl);
 		free(result.str);
-		xmlFreeDoc(doc);
 
-//					printf("(%lf,%lf)-> ", gps_data.fix.longitude, gps_data.fix.latitude);
-//					printf("HEADING: %lf, SPEED %lf\n", gps_data.fix.track, gps_data.fix.speed); /**< GNSS course angle [degree] (0 => north, 90 => east, 180 => south, 270 => west, no negative values). */
+
+		//POI查询API
+		result.str = (char*)malloc(1);
+		result.size = 0;
+		curl = curl_easy_init();
+		sprintf(revGeoRequest, "https://restapi.amap.com/v3/place/around?output=xml&location=%s&key=%s&extensions=all&types=%s&radius=%d&sortrule=distance", coordinates, getenv("amapkey"), POI_TYPE, POI_RADIUS);
+		curl_easy_setopt(curl, CURLOPT_URL, revGeoRequest);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeToString);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&result);
+		curl_easy_perform(curl);
+
+		//printf("%s  \n", result.str);
+		poi_solve(result);
+		
+		curl_easy_cleanup(curl);
+		free(result.str);
+
+
 
 		sprintf(response, "P%s %s %s %s %s %s", heading, road_name, roadinter_direction, roadinter_distance, roadinter_name1, roadinter_name2);
 		submit("proxy.sock", response);

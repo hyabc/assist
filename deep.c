@@ -6,7 +6,6 @@
 #include "assist.h"
 #include "nn.h"
 const double learning_rate = 1e-4;
-const double PI = acos(-1.0);
 const double alpha = 0.001, beta1 = 0.9, beta2 = 0.999, eps = 1e-6;
 #define epoch_max 100000
 const int epoches = 2000;

@@ -23,12 +23,18 @@
 
 #define TRAFFIC_THRESH 1.3
 
-#define MAX_Q1_SIZE 3
-#define MAX_Q2_SIZE 3
+//#define MAX_Q1_SIZE 3
+//#define MAX_Q2_SIZE 3
 
 #define MAX_SPEECH_TYPE 10
 
+#define POI_RADIUS 30
+#define POI_TYPE "060200|060400|070400|090100|150200|150400|150500|150600|150700|160100|200300|190302"
+#define POI_SAME_WAIT_SEC 20
+
 void submit(const char*, const char*);
+
+#define PI acos(-1.0)
 
 #endif
 

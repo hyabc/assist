@@ -114,11 +114,11 @@ void measure() {
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
 		serialport_write(serialfd, angle + OFFSET);
-		usleep(20);
+		usleep(200);
 
 	}
 	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-	usleep(300000);
+	usleep(200000);
 }
 
 int main() {

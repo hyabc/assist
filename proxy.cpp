@@ -25,8 +25,6 @@ int position_state;
 
 char msg[MAXBUF], response[MAXBUF];
 
-const double PI = acos(-1.0);
-
 namespace laser {
 
 	int x[SIZE];

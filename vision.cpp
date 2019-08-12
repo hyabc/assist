@@ -64,15 +64,13 @@ int main() {
 	set_batch_network(net, 1);
 	layer l = net->layers[net->n-1];
 
-	for (int iter = 1;/*iter <= 1*/;iter++) {
+	for (int iter = 1;iter <= 1;iter++) {
 		traffic_light::cur_option = -1;
 
-//		printf("BEGIN %d\n", iter);
-//		time_t start = clock();
 		cv::Mat f;
 		for (int t = 1;t <= 10;t++) 
 			cap >> f;
-//		f = cv::imread("a.jpg");
+		f = cv::imread("a.jpg");
 
 		image frame = mat_to_image(f);
 		image sized = letterbox_image(frame, net->w, net->h);
@@ -110,7 +108,7 @@ int main() {
 				printf("(%f, %f) size: (%f, %f) %d~%d, %d~%d, %s, prob=%f\n", b.x, b.y, b.w, b.h, left, right, top, bottom, name, maxprob);
 
 				sprintf(buf, "%d_detect%d.jpg", iter, i);
-				//imwrite(buf, subgraph);
+				imwrite(buf, subgraph);
 
 				if (strcmp(name, "traffic light") == 0) {
 					traffic_light::judge(subgraph, 0);
@@ -120,12 +118,11 @@ int main() {
 			}
 		}
 		sprintf(buf, "%d", iter);
-		//save_image(frame, buf);
+		save_image(frame, buf);
 
 		free_detections(dets, count);
 		free_image(frame);
 		free_image(sized);
-//		printf("%f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 		if (traffic_light::cur_option != -1) 
 			printf("Color: %s\n", traffic_light::cur_option == 0 ? "Red" : "Green");

@@ -43,3 +43,5 @@ deep
 judge
 gen
 weights-backup-94
+tmp.*
+tmp

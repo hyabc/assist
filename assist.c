@@ -1,8 +1,11 @@
 #include <sys/socket.h>
+#include <math.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <sys/types.h>
 #include <string.h>
+#include "assist.h"
+
 void submit(const char* sockname, const char* msg) {
 	struct sockaddr_un addr;	
 	memset(&addr, 0, sizeof(addr));	

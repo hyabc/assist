@@ -31,7 +31,8 @@ struct node {
 	string content;
 	int type;
 	bool exist;
-	node(char* msg, int len): content(msg + 1, len - 1), type(msg[0] - '0') {
+	int priority;
+	node(char* msg, int len): content(msg + 1, len - 1), type(msg[0] - '0'), priority(0) {
 		name[0] = 0;
 		strcat(name, "voice/");
 		exist = true;
@@ -61,8 +62,11 @@ struct node {
 		}
 		strcat(name, ".mp3");
 	}
+	friend bool operator < (const node& a, const node& b) {
+		return a.priority < b.priority;
+	}
 };
-std::queue<node> q1, q2;
+std::priority_queue<node> q1, q2;
 size_t header_func(void* ptr, size_t size, size_t nmemb, void* dest) {
 	map<string, string> *headers = (map<string, string>*)dest;
 	string line((char*)ptr);
@@ -133,7 +137,7 @@ void* thread_func1(void* arg) {
 
 		pthread_mutex_lock(&mutex1);
 		if (q1.size() > 0) {
-			x = new node(q1.front());
+			x = new node(q1.top());
 			q1.pop();
 		}
 		pthread_mutex_unlock(&mutex1);
@@ -152,13 +156,6 @@ void* thread_func1(void* arg) {
 				if (playPID != -1) kill(playPID, SIGKILL);
 				pthread_mutex_unlock(&mutex3);
 			}*/
-			while (q2.size() > MAX_Q2_SIZE) {
-				type_exist[q2.front().type] = false;
-				if (!q2.front().exist)
-					unlink(q2.front().name);
-
-				q2.pop();
-			}
 			q2.push(*x);
 			pthread_mutex_unlock(&mutex2);
 
@@ -176,7 +173,7 @@ void* thread_func2(void* arg) {
 
 		pthread_mutex_lock(&mutex2);
 		if (q2.size() > 0) {
-			x = new node(q2.front());
+			x = new node(q2.top());
 			q2.pop();
 		}
 		pthread_mutex_unlock(&mutex2);
@@ -197,7 +194,9 @@ void* thread_func2(void* arg) {
 			if (!x->exist)
 				unlink(x->name);
 
-			type_exist[x->type] = false;
+			if (x->type) 
+				type_exist[x->type] = false;
+
 			delete x;
 		}
 	}
@@ -231,20 +230,18 @@ int main() {
 		close(clientfd);
 
 		node x(msg, len);
-		if (type_exist[x.type]) {
-			printf("exist: %d\n", x.type);
-			continue;
+		if (x.type) {
+			if (type_exist[x.type]) {
+				printf("exist: %d\n", x.type);
+				continue;
+			}
+			type_exist[x.type] = true;
 		}
-		type_exist[x.type] = true;
 		
 		printf("speak: %s\n", x.content.c_str());
 
 		pthread_mutex_lock(&mutex1);
 //		if (x.important) {while (q1.size()) q1.pop();}
-		while (q1.size() > MAX_Q1_SIZE) {
-			type_exist[q1.front().type] = false;
-			q1.pop();
-		}
 		q1.push(x);
 		pthread_mutex_unlock(&mutex1);
 

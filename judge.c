@@ -6,7 +6,6 @@
 #include "assist.h"
 #include "nn.h"
 
-const double PI = acos(-1.0);
 int hidden_node, input_node, output_node, total_node, train_count, test_count, input_begin, input_end, hidden_begin, hidden_end, output_begin, output_end, dataset_type, dataset_input_size, dataset_output_size;
 int sum[100];
 double loss;

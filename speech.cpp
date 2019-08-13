@@ -32,7 +32,11 @@ struct node {
 	int type;
 	bool exist;
 	int priority;
-	node(char* msg, int len): content(msg + 1, len - 1), type(msg[0] - '0'), priority(0) {
+	/* 4:超声波/激光
+		3:红绿灯
+		2:路口
+		1:POI */
+	node(char* msg, int len): content(msg + 2, len - 2), type(msg[0] - '0'), priority(msg[1] - '0') {
 		name[0] = 0;
 		strcat(name, "voice/");
 		exist = true;

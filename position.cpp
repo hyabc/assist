@@ -143,11 +143,13 @@ void poi_solve(const String& result) {
 							} else {
 								int dist;
 								sscanf(poi_distance, "%d", &dist);
+								bool istransport = (strcmp(poi_type, "150500") == 0 || strcmp(poi_type, "150600") == 0 || strcmp(poi_type, "150700") == 0);
+
 								if (dist < POI_RADIUS) {
 									std::string curID(poi_id);
-									if (last.count(curID) == 0 || (double)(clock() - last[curID]) / CLOCKS_PER_SEC > POI_SAME_WAIT_SEC) {
+									if (last.count(curID) == 0 || (double)(clock() - last[curID]) / CLOCKS_PER_SEC > (istransport ? POI_SAME_TRANSPORT_SEC : POI_SAME_WAIT_SEC)) {
 										last[curID] = clock();
-										sprintf(response, "0距离%s米有%s", poi_distance, poi_name);
+										sprintf(response, "01距离%s米有%s", poi_distance, poi_name);
 										printf("SUBMIT: %s\n", response);
 										submit("speech.sock", response);
 									}

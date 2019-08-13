@@ -44,10 +44,10 @@ namespace laser {
 
 		int cur = nn_predict(x);
 		if (cur == 2) {
-			sprintf(response, "5向上台阶");
+			sprintf(response, "54向上台阶");
 			submit("speech.sock", response);
 		} else if (cur == 3) {
-			sprintf(response, "5向下台阶");
+			sprintf(response, "54向下台阶");
 			submit("speech.sock", response);
 		}
 	}
@@ -84,19 +84,19 @@ namespace ultrasonic {
 			if (state != 2) {
 				state = 2;
 				printf("ULTRASONIC SPEAK\n");
-				sprintf(response, "1有障碍");
+				sprintf(response, "14有障碍");
 				submit("speech.sock", response);
 			}
 		} else if (left) {
 			if (state != 1) {
 				state = 1;
-				sprintf(response, "1左障碍");
+				sprintf(response, "14左障碍");
 				submit("speech.sock", response);
 			}
 		} else if (right) {
 			if (state != 3) {
 				state = 3;
-				sprintf(response, "1右障碍");
+				sprintf(response, "14右障碍");
 				submit("speech.sock", response);
 			}
 		} else {
@@ -149,7 +149,7 @@ namespace position {
 			if (position_state != 3) {
 				position_state = 3;
 				ss >> roadinter_name;
-				sprintf(response, "2你在%s", roadinter_name);
+				sprintf(response, "22你在%s", roadinter_name);
 				submit("speech.sock", response);
 			}
 			return;
@@ -164,7 +164,7 @@ namespace position {
 			puts("position state 2");
 			if (position_state != 2) {
 				position_state = 2;
-				sprintf(response, "2你所在%s", road_name);
+				sprintf(response, "22你所在%s", road_name);
 				submit("speech.sock", response);
 			}
 //		}
@@ -180,7 +180,7 @@ namespace monitor {
 		ss >> volt;
 
 		if (volt < 10500) {
-			sprintf(response, "3电池电量低");
+			sprintf(response, "31电池电量低");
 			submit("speech.sock", response);
 		} else if (volt < 10000) {
 			sync();
@@ -207,18 +207,16 @@ namespace vision {
 
 //		if (cur != status) {
 			if (cur == 0) {
-//				if (status != 1) {
-					sprintf(response, "4红灯");
-					submit("speech.sock", response);
-//				}
+				sprintf(response, "43红灯");
+				submit("speech.sock", response);
 			}
 			if (cur == 1) {
-				sprintf(response, "4绿灯");
+				sprintf(response, "43绿灯");
 				submit("speech.sock", response);
 			}
 			status = cur;
-		}
-//	}
+//		}
+	}
 }
 
 int main() {

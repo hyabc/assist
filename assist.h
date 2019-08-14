@@ -8,8 +8,6 @@
 
 #define MAXBUF 1000
 
-#define OFFSET 30
-
 #define MIN_STAIRCASE_HEIGHT 100
 
 #define MIN_FRONT_DISTANCE 200

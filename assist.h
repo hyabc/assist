@@ -2,8 +2,8 @@
 #define __ASSIST_H__
 
 #define MIN_ANGLE 90
-#define MAX_ANGLE 140
-#define DELTA_ANGLE 2
+#define MAX_ANGLE 150
+#define DELTA_ANGLE 1
 #define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)
 
 #define MAXBUF 1000

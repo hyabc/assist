@@ -1,13 +1,13 @@
 #define MIN_ANGLE 90
-#define MAX_ANGLE 140
-#define DELTA_ANGLE 2
+#define MAX_ANGLE 150
+#define DELTA_ANGLE 1
 #define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)
-#define OFFSET 10
+#define OFFSET 0
 
 #include <Servo.h>
 #include<SoftwareSerial.h>
 
-#define HEADER 0x59
+const int HEADER = 0x59;
 
 SoftwareSerial sensor(2,3);
 Servo servo;
@@ -18,6 +18,7 @@ int data[9];
 void setup() {
 	Serial.begin(115200);
 	sensor.begin(115200);
+	servo.attach(11);
 }
 
 void measure() {
@@ -48,12 +49,19 @@ void measure() {
 }
 
 void loop() {
+	Serial.print('L');
 	for (angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		servo.write(angle + OFFSET);
-		delay(10);
+		delay(5);
+		measure();
 		measure();
 		Serial.print(distance);
 		Serial.print(' ');
+	}
+	for (angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
+		servo.write(angle + OFFSET);
+		delay(5);
+		measure();
 	}
 	Serial.println();
 }

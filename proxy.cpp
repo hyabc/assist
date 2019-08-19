@@ -192,6 +192,8 @@ namespace monitor {
 namespace vision {
 
 	int status;
+	int exist_bicycle, exist_motorbike;
+
 	void solve(std::string line) {
 	
 		if (position_state != 3) {
@@ -201,7 +203,7 @@ namespace vision {
 
 		int cur;
 		std::stringstream ss(line);
-		ss >> cur;
+		ss >> cur >> exist_bicycle >> exist_motorbike;
 
 		if (cur == -1) return;
 
@@ -216,6 +218,17 @@ namespace vision {
 			}
 			status = cur;
 //		}
+
+		if (position_state != 3) {
+			if (exist_bicycle) {
+				sprintf(response, "63前方有自行车");
+				submit("speech.sock", response);
+			}
+			if (exist_motorbike) {
+				sprintf(response, "63前方有摩托车");
+				submit("speech.sock", response);
+			}
+		}
 	}
 }
 

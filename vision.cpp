@@ -17,6 +17,7 @@ extern "C" {
 #define min(x, y) ({x < y ? x : y;})
 
 char buf[MAXBUF];
+int exist_bicycle, exist_motorbike;
 
 namespace traffic_light {
 	double area;
@@ -66,6 +67,8 @@ int main() {
 
 	for (int iter = 1;iter <= 1;iter++) {
 		traffic_light::cur_option = -1;
+		exist_bicycle = 0;
+		exist_motorboke = 0;
 
 		cv::Mat f;
 		for (int t = 1;t <= 10;t++) 
@@ -113,8 +116,11 @@ int main() {
 				if (strcmp(name, "traffic light") == 0) {
 					traffic_light::judge(subgraph, 0);
 					traffic_light::judge(subgraph, 1);
+				} else if (strcmp(name, "bicycle") == 0) {
+					exist_bicycle = 1;
+				} else if (strcmp(name, "motorbike") == 0) {
+					exist_motorbike = 1;
 				}
-					
 			}
 		}
 		sprintf(buf, "%d", iter);
@@ -127,7 +133,7 @@ int main() {
 		if (traffic_light::cur_option != -1) 
 			printf("Color: %s\n", traffic_light::cur_option == 0 ? "Red" : "Green");
 		
-		sprintf(buf, "V%d", traffic_light::cur_option);
+		sprintf(buf, "V%d %d %d", traffic_light::cur_option, exist_bicycle, exist_motorbike);
 		submit("proxy.sock", buf);
 	}
 	return 0;

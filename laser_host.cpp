@@ -13,8 +13,6 @@ extern "C" {
 #include "assist.h"
 }
 
-#define header 0x59
-
 #define OFFSET 0
 
 char buf[MAXBUF], msg[MAXBUF];
@@ -66,7 +64,7 @@ char serialport_getchar() {
 }
 
 void* laser_receive(void* arg) {
-	int pos;
+	int pos, cur_distance, cur_strength;
 	while (true) {
 		pos = 0;
 		while ((buf[pos] = serialport_getchar()) != '\n') pos++;
@@ -74,10 +72,18 @@ void* laser_receive(void* arg) {
 		std::string str(buf, pos);
 		std::stringstream ss(str);
 
-		pthread_mutex_lock(&mutex);
-		ss >> distance >> strength;
-		//printf("%d, %d\n", distance, strength);
-		pthread_mutex_unlock(&mutex);
+		ss >> cur_distance >> cur_strength;
+		printf("%d %d\n", cur_distance, cur_strength);
+
+		if (cur_distance >= 30 && cur_distance <= 500 && cur_strength >= 20 && cur_strength <= 2000) {
+			pthread_mutex_lock(&mutex);
+			distance = cur_distance;
+			strength = cur_strength;
+			pthread_mutex_unlock(&mutex);
+			if (cur_distance < 80 || cur_distance > 130) {
+//				printf("RECEIVE: %d %d\n", cur_distance, cur_strength);
+			}
+		}
 	}
 }
 
@@ -85,7 +91,7 @@ void measure() {
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
 		serialport_write(servofd, angle + OFFSET);
-		usleep(10000);
+		usleep(20000);
 
 		pthread_mutex_lock(&mutex);
 		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = distance;
@@ -95,13 +101,13 @@ void measure() {
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
 		serialport_write(servofd, angle + OFFSET);
-		usleep(10000);
+		usleep(20000);
 	}
 }
 
 int main() {
-	servofd = serialport_init("/dev/ttyACM0");
-	laserfd = serialport_init("/dev/ttyUSB0");
+	servofd = serialport_init("/dev/ttyACM2");
+	laserfd = serialport_init("/dev/ttyACM0");
 
 	pthread_t laser_thread;
 	pthread_create(&laser_thread, NULL, laser_receive, NULL);

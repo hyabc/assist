@@ -57,7 +57,7 @@ void init() {
 		
 	dataset_input_size = SIZE;
 	dataset_output_size = 3;
-	train_count = 200, test_count = 101;
+	train_count = 100, test_count = 41;
 
 	FILE* train = fopen("train-data", "r");
 	for (int i = 1;i <= train_count;i++) {
@@ -172,7 +172,7 @@ void addedge(int u, int v, double weight) {
 }
 int main() {
 	edge = 0;
-	srand(time(0));
+	srand(998244353);
 	init();
 
 	/*printf("Enter hidden layer: ");

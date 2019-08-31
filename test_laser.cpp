@@ -1,94 +1,52 @@
 #include <stdlib.h>
+#include <iostream>
+#include <string>
+#include <pthread.h>
 #include <sstream>
 #include <termios.h> 
+#include <string.h>
 #include <unistd.h> 
 #include <fcntl.h> 
 #include <errno.h>
 #include <stdio.h>
-#include "vl53l0x_api.h"
-#include "vl53l0x_platform.h"
 extern "C" {
 #include "assist.h"
 }
 
-char buf[MAXBUF], msg[MAXBUF];
-int serialfd;
-VL53L0X_Dev_t sensor;
-int dist[SIZE], base[SIZE], cnt[SIZE], tot;
-char st[MAXBUF];
+#define OFFSET 0
 
-/*void WaitDataReady(VL53L0X_DEV dev) {
-	uint8_t isready = 0;
-	int cnt = 0;
-	do {
-		VL53L0X_GetMeasurementDataReady(dev, &isready);
-		if (isready == 0x01) 
-			break;
+char buf[MAXBUF], msg[MAXBUF], st[MAXBUF];
+int servofd, laserfd;
+int dist[SIZE], base[SIZE];
 
-		cnt++;
-		VL53L0X_PollingDelay(dev);
-
-	} while (cnt < VL53L0X_DEFAULT_MAX_LOOP);
-}
-
-void WaitStopCompleted(VL53L0X_DEV dev) {
-	uint32_t isstopcompleted = 0;
-	int cnt = 0;
-	do {
-		VL53L0X_GetStopCompletedStatus(dev, &isstopcompleted);
-		if (isstopcompleted == 0x00)  
-			break;
-
-		cnt++;
-		VL53L0X_PollingDelay(dev);
-	} while (cnt < VL53L0X_DEFAULT_MAX_LOOP);
-}*/
-
-void startmeasurement(VL53L0X_Dev_t *devptr) {
-	uint32_t refSpadCount;
-	uint8_t isApertureSpads, VhvSettings, PhaseCal;
-
-	VL53L0X_StaticInit(devptr);
-	VL53L0X_PerformRefCalibration(devptr, &VhvSettings, &PhaseCal);
-	VL53L0X_PerformRefSpadManagement(devptr, &refSpadCount, &isApertureSpads);
-	VL53L0X_SetDeviceMode(devptr, VL53L0X_DEVICEMODE_SINGLE_RANGING);
-
-	VL53L0X_SetLimitCheckEnable(devptr, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
-	VL53L0X_SetLimitCheckEnable(devptr, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
-	VL53L0X_SetLimitCheckValue(devptr, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.1*65536));
-	VL53L0X_SetLimitCheckValue(devptr, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(60*65536));
-	VL53L0X_SetVcselPulsePeriod(devptr, VL53L0X_VCSEL_PERIOD_PRE_RANGE, 18);
-	VL53L0X_SetVcselPulsePeriod(devptr, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, 14);
-	VL53L0X_SetMeasurementTimingBudgetMicroSeconds(devptr, 50000);
-}
+unsigned char data[9];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int distance, strength;
 
 int serialport_init(const char* serialport) {
-	struct termios toptions;
-	int fd = open(serialport, O_RDWR | O_NONBLOCK );
+	struct termios tty;
+	int fd = open(serialport, O_RDWR | O_NOCTTY);
 
-	tcgetattr(fd, &toptions);
+	tcgetattr(fd, &tty);
 	speed_t brate = B115200;
-	cfsetispeed(&toptions, brate);
-	cfsetospeed(&toptions, brate);
+	cfsetispeed(&tty, brate);
+	cfsetospeed(&tty, brate);
 
-	toptions.c_cflag &= ~PARENB;
-	toptions.c_cflag &= ~CSTOPB;
-	toptions.c_cflag &= ~CSIZE;
-	toptions.c_cflag |= CS8;
-	toptions.c_cflag &= ~CRTSCTS;
+	tty.c_cflag &= ~PARENB;
+	tty.c_cflag &= ~CSTOPB;
+	tty.c_cflag &= ~CSIZE;
+	tty.c_cflag |= CS8;
+	tty.c_cflag &= ~CRTSCTS;
+	tty.c_cflag |= CREAD | CLOCAL;
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+	tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	tty.c_oflag &= ~OPOST;
 
+	tty.c_cc[VMIN]  = 0;
+	tty.c_cc[VTIME] = 0;
 
-	toptions.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
-	toptions.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off s/w flow ctrl
-
-	toptions.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
-	toptions.c_oflag &= ~OPOST; 
-
-	toptions.c_cc[VMIN]  = 0;
-	toptions.c_cc[VTIME] = 0;
-
-	tcsetattr(fd, TCSANOW, &toptions);
-	tcsetattr(fd, TCSAFLUSH, &toptions);
+	tcflush(fd, TCIOFLUSH);
+	tcsetattr(fd, TCSANOW, &tty);
 
 	return fd;
 }
@@ -99,89 +57,95 @@ void serialport_write(int fd, int x) {
 	tcflush(fd, TCIOFLUSH);
 }
 
+char serialport_getchar() {
+	char value;
+	while (read(laserfd, &value, 1) != 1) ;
+	return value;
+}
+
+void* laser_receive(void* arg) {
+	int pos, cur_distance, cur_strength;
+	while (true) {
+		pos = 0;
+		while ((buf[pos] = serialport_getchar()) != '\n') pos++;
+
+		std::string str(buf, pos);
+		std::stringstream ss(str);
+
+		ss >> cur_distance >> cur_strength;
+
+		if (cur_distance >= 30 && cur_distance <= 500) {
+			pthread_mutex_lock(&mutex);
+			distance = cur_distance;
+			strength = cur_strength;
+			pthread_mutex_unlock(&mutex);
+		}
+	}
+}
+
 void measure() {
-	VL53L0X_RangingMeasurementData_t measurementdata;
 
 	for (int angle = MIN_ANGLE;angle <= MAX_ANGLE;angle += DELTA_ANGLE) {
-		serialport_write(serialfd, angle + OFFSET);
+		serialport_write(servofd, angle + OFFSET);
 		usleep(20000);
 
-		VL53L0X_PerformSingleRangingMeasurement(&sensor, &measurementdata);
-
-		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = measurementdata.RangeMilliMeter;
+		pthread_mutex_lock(&mutex);
+		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = distance;
+		pthread_mutex_unlock(&mutex);
 
 	}
 
 	for (int angle = MAX_ANGLE;angle >= MIN_ANGLE;angle -= DELTA_ANGLE) {
-		serialport_write(serialfd, angle + OFFSET);
-		usleep(200);
-
+		serialport_write(servofd, angle + OFFSET);
+		usleep(20000);
 	}
-	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-	usleep(200000);
 }
 
 int main() {
-	serialfd = serialport_init("/dev/ttyACM1");
+	servofd = serialport_init("/dev/ttyACM2");
+	laserfd = serialport_init("/dev/ttyACM0");
 
-	sensor.I2cDevAddr = 0x29;
-	sensor.fd = VL53L0X_i2c_init("/dev/i2c-1", 0x29);
+	pthread_t laser_thread;
+	pthread_create(&laser_thread, NULL, laser_receive, NULL);
 
-	VL53L0X_DataInit(&sensor);
-	startmeasurement(&sensor);
+	sleep(1);
 
 	memset(base, 0, sizeof(base));
-	memset(cnt, 0, sizeof(cnt));
-	tot = 0;
 
-	serialport_write(serialfd, MIN_ANGLE + OFFSET);
-	sleep(1);
+	serialport_write(servofd, MIN_ANGLE + OFFSET);
 	measure();
 
-	for (int iter = 1;iter <= LASER_CALIBRATION_NUM || tot < SIZE;iter++) {
+	for (int iter = 1;iter <= LASER_CALIBRATION_NUM;iter++) {
 		measure();
 		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
 		printf("\n");
 		for (int i = 0;i < SIZE;i++) 
-			if (dist[i] < 2000) {
-				if (cnt[i] == 0) tot++;
-
-				cnt[i]++;
-				base[i] += dist[i];
-			} else
-				break;
+			base[i] += dist[i];
 	}
-	for (int i = 0;i < SIZE;i++) base[i] /= cnt[i];
+
+	for (int i = 0;i < SIZE;i++) base[i] /= LASER_CALIBRATION_NUM;
 	printf("========================CALIBRATION============================\n");
 	for (int i = 0;i < SIZE;i++) printf("%d ", base[i]);
 	printf("\n===============================================================\n");
 
-
-	FILE* value1 = fopen("value4", "a");
-
+	FILE* fd = fopen("value3", "a");
 	for (int iter = 1;;iter++) {
-		gets(st);
+	    gets(st);
 		if (strcmp(st, "end") == 0) break;
 
 		measure();
-		//for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
-		//printf("\n");
 
 		std::stringstream ss;
-		bool tf = false;
 		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++)
-			if (dist[i] >= 2000 || tf) {
-				tf = true;
-				ss << "0 ";
-			} else
-				ss << dist[i] - base[i] << " ";
-		fprintf(value1, "%s\n", ss.str().c_str());
-		printf("%s\n", ss.str().c_str());
+			ss << dist[i] - base[i] << " ";
+		printf("%s\n\n", ss.str().c_str());
+		fprintf(fd, "%s\n", ss.str().c_str());
+
 	}
 
-	VL53L0X_i2c_close();
-	close(serialfd);
-	fclose(value1);
+	close(servofd);
+	close(laserfd);
+	fclose(fd);
 	return 0;
 }
 

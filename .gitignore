@@ -34,6 +34,8 @@ run
 value1
 value2
 value3
+value*
+adapter*
 lasertest
 value4
 test-data

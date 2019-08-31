@@ -27,34 +27,35 @@ char msg[MAXBUF], response[MAXBUF];
 
 namespace laser {
 
-	int dist[SIZE], base[SIZE], countdown, delta[SIZE];
+	int delta[SIZE];
 
 	void solve(std::string line) {
 		std::stringstream ss(line);
 
-		for (int i = 0;i < SIZE;i++) 
-			ss >> dist[i];
+		for (int i = 0;i < SIZE;i++) ss >> delta[i];
 
-		if (countdown) {
-			countdown--;
-			for (int i = 0;i < SIZE;i++) base[i] += dist[i];
-			if (!countdown) {
-				for (int i = 0;i < SIZE;i++) base[i] /= LASER_CALIBRATION_NUM;
-				printf("========================CALIBRATION============================\n");
-				for (int i = 0;i < SIZE;i++) printf("%d ", base[i]);
-				printf("\n===============================================================\n");
+		for (int i = 0;i < SIZE;i++)  {
+			double cur = delta[i] * cos((double)(i * DELTA_ANGLE + MIN_ANGLE - 90) * 2.0 / 3.0 * PI / 180.0);
+			if (cur < -10.0) {
+				puts("UP!");
+				sprintf(response, "54向上台阶");
+				submit("speech.sock", response);
+				break;
+			} else if (cur > 10.0) {
+				puts("DOWN!");
+				sprintf(response, "54向下台阶");
+				submit("speech.sock", response);
+				break;
 			}
-		} else {
-			for (int i = 0;i < SIZE;i++) delta[i] = dist[i] - base[i];
-			for (int i = 0;i < SIZE;i++) printf("%d ", delta[i]);printf("\n");
 		}
-
-
-/*		int cur = nn_predict(x);
+		/*int cur = nn_predict(delta);
+		printf("result: %d\n", cur);
 		if (cur == 2) {
+			puts("UP!");
 			sprintf(response, "54向上台阶");
 			submit("speech.sock", response);
 		} else if (cur == 3) {
+			puts("DOWN!");
 			sprintf(response, "54向下台阶");
 			submit("speech.sock", response);
 		}*/
@@ -228,7 +229,7 @@ namespace vision {
 }
 
 int main() {
-	//nn_init();
+	nn_init();
 
 	unlink("proxy.sock");
 
@@ -243,8 +244,6 @@ int main() {
 
 	position_state = 0;
 	ultrasonic::state = 0;
-	laser::countdown = LASER_CALIBRATION_NUM;
-	memset(laser::base, 0, sizeof(laser::base));
 
 	while (1) {
 		struct sockaddr_un new_addr;

@@ -19,7 +19,6 @@ char buf[MAXBUF], msg[MAXBUF], st[MAXBUF];
 int servofd, laserfd;
 int dist[SIZE], base[SIZE];
 
-unsigned char data[9];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int distance, strength;
 
@@ -115,7 +114,7 @@ int main() {
 	serialport_write(servofd, MIN_ANGLE + OFFSET);
 	measure();
 
-	for (int iter = 1;iter <= LASER_CALIBRATION_NUM;iter++) {
+	/*for (int iter = 1;iter <= LASER_CALIBRATION_NUM;iter++) {
 		measure();
 		for (int i = 0;i < SIZE;i++) printf("%d ", dist[i]);
 		printf("\n");
@@ -127,6 +126,7 @@ int main() {
 	printf("========================CALIBRATION============================\n");
 	for (int i = 0;i < SIZE;i++) printf("%d ", base[i]);
 	printf("\n===============================================================\n");
+	*/
 
 	FILE* fd = fopen("value3", "a");
 	for (int iter = 1;;iter++) {
@@ -137,7 +137,7 @@ int main() {
 
 		std::stringstream ss;
 		for (int i = 0;i <= (MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE;i++)
-			ss << dist[i] - base[i] << " ";
+			ss << dist[i] /*- base[i]*/ << " ";
 		printf("%s\n\n", ss.str().c_str());
 		fprintf(fd, "%s\n", ss.str().c_str());
 

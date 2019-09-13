@@ -5,10 +5,10 @@
 #include <math.h>
 #include "assist.h"
 #include "nn.h"
-const double learning_rate = 1e-4;
+const double learning_rate = 3e-4;
 const double alpha = 0.001, beta1 = 0.9, beta2 = 0.999, eps = 1e-6;
-#define epoch_max 100000
-const int epoches = 2000;
+#define epoch_max 500010
+const int epoches = 10000;
 int hidden_node, input_node, output_node, total_node, train_count, test_count, input_begin, input_end, hidden_begin, hidden_end, output_begin, output_end, dataset_type, dataset_input_size, dataset_output_size;
 int sum[20];
 double loss;
@@ -27,7 +27,7 @@ double training_set_image[70010][100];
 int test_set_label[10010];
 double test_set_image[10010][100];
 int edge;
-double weights[TOTAL_MAX_EDGE], edge_gradient_sum[TOTAL_MAX_EDGE];
+double weights[TOTAL_MAX_EDGE], edge_gradient_sum[TOTAL_MAX_EDGE], edge_m[TOTAL_MAX_EDGE], edge_v[TOTAL_MAX_EDGE];
 int head[TOTAL_MAX_EDGE], tail[TOTAL_MAX_EDGE], succ[TOTAL_MAX_EDGE], prev[TOTAL_MAX_EDGE], first[TOTAL_MAX];
 double in[TOTAL_MAX], out[TOTAL_MAX], din[TOTAL_MAX], dout[TOTAL_MAX];
 
@@ -57,7 +57,7 @@ void init() {
 		
 	dataset_input_size = SIZE;
 	dataset_output_size = 3;
-	train_count = 100, test_count = 41;
+	train_count = 240, test_count = 60;
 
 	FILE* train = fopen("train-data", "r");
 	for (int i = 1;i <= train_count;i++) {
@@ -141,7 +141,10 @@ void test_thread(int c) {
 	forward();
 
 	double *p = arrmax(out + output_begin, out + output_end + 1);
-	if ((p - (out + output_begin)) != test_set_label[c]) incorrectnum++;
+	if ((p - (out + output_begin)) != test_set_label[c]) {
+	//	printf("%d -> %d\n", test_set_label[c], (p - (out + output_begin)));
+		incorrectnum++;
+	}
 }
 double test() {
 	incorrectnum = 0;
@@ -156,6 +159,14 @@ void train() {
 		loss = 0.0;
 		train_thread(c);
 		for (int j = 1;j <= edge;j++) weights[j] -= learning_rate * edge_gradient_sum[j];
+		      /* timestamp++;
+		       for (int j = 1;j <= edge;j++) {
+		           edge_m[j] = beta1 * edge_m[j] + (1.0 - beta1) * edge_gradient_sum[j];
+		           edge_v[j] = beta2 * edge_v[j] + (1.0 - beta2) * edge_gradient_sum[j] * edge_gradient_sum[j];
+		           double corrected_m = edge_m[j] / (1.0 - power(beta1, timestamp)), 
+		                  corrected_v = edge_v[j] / (1.0 - power(beta2, timestamp));
+		           weights[j] -= alpha * corrected_m / (sqrt(corrected_v) + eps);
+			   }*/
 		epoch_loss[pointer] += loss;
 //		printf("\r");printtime();printf(" [%d-%d]   loss: %f            ", c, c + batch_size - 1, loss);
 	}
@@ -171,6 +182,7 @@ void addedge(int u, int v, double weight) {
 	first[u] = edge;
 }
 int main() {
+	timestamp = 0;
 	edge = 0;
 	srand(998244353);
 	init();
@@ -182,7 +194,7 @@ int main() {
 	for (int i = 1;i <= num;i++) sum[i] = sum[i - 1] + layer_nodes[i];
 
 	calc();
-	
+
 
 	for (int i = hidden_begin;i < hidden_begin + sum[1];i++)
 		for (int j = 1;j < input_node;j++) addedge(j, i, Random() / sqrt(input_node - 1));

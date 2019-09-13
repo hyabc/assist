@@ -40,7 +40,7 @@ double* arrmax(double* begin, double* end) {
 void forward() {
 	for (int i = hidden_begin;i <= output_end;i++) in[i] = out[i] = 0.0;
 	for (int i = input_begin;i <= hidden_end;i++) {
-		if (i >= hidden_begin && i <= hidden_end) out[i] = relu(in[i]);
+		if (i >= hidden_begin && i <= hidden_end) out[i] = sigmoid(in[i]);
 		for (int e = first[i];e;e = succ[e]) 
 			in[tail[e]] += out[i] * weights[e];
 	}

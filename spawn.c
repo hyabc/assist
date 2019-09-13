@@ -13,9 +13,9 @@ int main() {
 
 	sleep(1);
 
-	//if (!fork()) execlp("python3", "python3", "adapter0.py", NULL);
+	//if (!fork()) execlp("python3", "python3", "ultrasonic_bridge.py", NULL);
 	if (!fork()) execl("monitor", "monitor", NULL);
-	//if (!fork()) execl("run", "run", NULL);
+	//if (!fork()) execl("laser_host", "laser_host", NULL);
 	if (!fork()) execl("position", "position", NULL);
 	//if (!fork()) execl("vision", "vision", NULL);
 

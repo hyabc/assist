@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <atomic>
 #include <iostream>
 #include <string>
 #include <pthread.h>
@@ -19,9 +20,7 @@ char buf[MAXBUF], msg[MAXBUF];
 int servofd, laserfd;
 int dist[SIZE], base[SIZE];
 
-unsigned char data[9];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-int distance, strength;
+std::atomic_int distance, strength;
 
 int serialport_init(const char* serialport) {
 	struct termios tty;
@@ -73,16 +72,11 @@ void* laser_receive(void* arg) {
 		std::stringstream ss(str);
 
 		ss >> cur_distance >> cur_strength;
-		printf("%d %d\n", cur_distance, cur_strength);
+		//printf("%d %d\n", cur_distance, cur_strength);
 
 		if (cur_distance >= 30 && cur_distance <= 500 && cur_strength >= 20 && cur_strength <= 2000) {
-			pthread_mutex_lock(&mutex);
 			distance = cur_distance;
 			strength = cur_strength;
-			pthread_mutex_unlock(&mutex);
-			if (cur_distance < 80 || cur_distance > 130) {
-//				printf("RECEIVE: %d %d\n", cur_distance, cur_strength);
-			}
 		}
 	}
 }
@@ -93,9 +87,7 @@ void measure() {
 		serialport_write(servofd, angle + OFFSET);
 		usleep(20000);
 
-		pthread_mutex_lock(&mutex);
 		dist[(angle - MIN_ANGLE) / DELTA_ANGLE] = distance;
-		pthread_mutex_unlock(&mutex);
 
 	}
 

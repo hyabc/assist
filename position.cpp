@@ -237,6 +237,7 @@ int main() {
 		free(result.str);
 
 
+		printf("coordinate = %s\n", coordinates);
 		if (exist_roadinter)
 			sprintf(response, "P%s %s %s", road_name, roadinter_distance, roadinter_name);
 		else 

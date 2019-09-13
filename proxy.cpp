@@ -34,18 +34,40 @@ namespace laser {
 
 		for (int i = 0;i < SIZE;i++) ss >> delta[i];
 
+
+		int status = 0, counter = 0;
 		for (int i = 0;i < SIZE;i++)  {
-			double cur = delta[i] * cos((double)(i * DELTA_ANGLE + MIN_ANGLE - 90) * 2.0 / 3.0 * PI / 180.0);
-			if (cur < -10.0) {
-				puts("UP!");
-				sprintf(response, "54向上台阶");
-				submit("speech.sock", response);
-				break;
+			double cur = delta[i] * cos((double)(i * DELTA_ANGLE + MIN_ANGLE - 90) * PI / 180.0);
+			if (cur < -6.0) {
+				if (status != -1) {
+					status = -1;
+					counter = 0;
+				}
+				counter++;
+				if (counter >= 3) {
+					puts("UP!");
+					sprintf(response, "54向上台阶");
+					submit("speech.sock", response);
+					break;
+				}
 			} else if (cur > 10.0) {
-				puts("DOWN!");
-				sprintf(response, "54向下台阶");
-				submit("speech.sock", response);
-				break;
+				if (status != 1) {
+					status = 1;
+					counter = 0;
+				}
+				counter++;
+				if (counter >= 3) {
+					puts("DOWN!");
+					sprintf(response, "54向下台阶");
+					submit("speech.sock", response);
+					break;
+				}
+			} else {
+				if (status != 0) {
+					status = 0;
+					counter = 0;
+				}
+				counter++;
 			}
 		}
 		/*int cur = nn_predict(delta);
@@ -77,7 +99,7 @@ namespace ultrasonic {
 //		if (position_state == 3) return;
 
 		std::stringstream ss(line);
-		for (int i = 0;i < 3;i++) {
+		for (int i = 2;i >= 0;i--) {
 			ss >> a[i];
 			if (a[i] == -1) a[i] = INF;
 		}
@@ -201,6 +223,8 @@ namespace monitor {
 namespace vision {
 
 	int status;
+	int exist_bicycle, exist_motorbike;
+
 	void solve(std::string line) {
 	
 		if (position_state != 3) {
@@ -210,7 +234,7 @@ namespace vision {
 
 		int cur;
 		std::stringstream ss(line);
-		ss >> cur;
+		ss >> cur >> exist_bicycle >> exist_motorbike;
 
 		if (cur == -1) return;
 
@@ -225,6 +249,17 @@ namespace vision {
 			}
 			status = cur;
 //		}
+
+		if (position_state != 3) {
+			if (exist_bicycle) {
+				sprintf(response, "63前方有自行车");
+				submit("speech.sock", response);
+			}
+			if (exist_motorbike) {
+				sprintf(response, "63前方有摩托车");
+				submit("speech.sock", response);
+			}
+		}
 	}
 }
 

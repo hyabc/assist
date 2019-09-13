@@ -1,7 +1,7 @@
 #ifndef __ASSIST_H__
 #define __ASSIST_H__
 
-#define MIN_ANGLE 100
+#define MIN_ANGLE 120
 #define MAX_ANGLE 150
 #define DELTA_ANGLE 1
 #define SIZE ((MAX_ANGLE - MIN_ANGLE) / DELTA_ANGLE + 1)

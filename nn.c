@@ -1,1 +1,1 @@
-const int layer_nodes[20] = {0, 40, 20};
+const int layer_nodes[20] = {0, 15, 5};
